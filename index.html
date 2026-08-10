@@ -568,6 +568,20 @@
                     <i class="bi bi-person-gear"></i> Sửa Thông Tin
                   </button>
                 </div>
+
+
+<div class="col-12 mt-1">
+  <button class="btn btn-sm btn-outline-dark w-100 action-btn fw-bold" 
+          onclick="moBillFullScreen('${item.SOMAY}', '${item.TENTT}', '${item.MAKH}', '${item.SO_DT}', '${item.DIACHITT}', ${item.CUOC})">
+    <i class="bi bi-printer"></i> Xem & In Hóa Đơn
+  </button>
+</div>
+
+
+
+
+
+
               </div>
 
             </div>
@@ -749,6 +763,94 @@
       setTimeout(() => { toast.style.display = "none"; }, 300); 
     }, 2000);
   }
+
+
+
+function moBillFullScreen(somay, ten, makh, sdt, diachi, cuoc) {
+  // Điền kỳ cước
+  let thang = document.getElementById("selectThang").value;
+  let year = new Date().getFullYear();
+  document.getElementById('billKyCuoc').innerText = (thang < 10 ? "0" + thang : thang) + "/" + year;
+  
+  // Điền thông tin khách
+  document.getElementById('billTenKH').innerText = ten || "";
+  document.getElementById('billSoMay').innerText = somay || "";
+  document.getElementById('billMaKH').innerText = makh || "";
+  document.getElementById('billSDT').innerText = sdt || "";
+  document.getElementById('billDiaChi').innerText = diachi || "";
+  
+  // Điền tiền
+  let tien = (cuoc || 0).toLocaleString('vi-VN');
+  document.getElementById('billCuoc').innerText = tien;
+  document.getElementById('billTongTien').innerText = tien;
+  
+  // Lấy giờ hiện tại (Format: DD/MM/YYYY HH:MM)
+  let now = new Date();
+  let timeStr = String(now.getDate()).padStart(2, '0') + "/" + 
+                String(now.getMonth()+1).padStart(2, '0') + "/" + 
+                now.getFullYear() + " " + 
+                String(now.getHours()).padStart(2, '0') + ":" + 
+                String(now.getMinutes()).padStart(2, '0');
+  document.getElementById('billTime').innerText = timeStr;
+
+  // Ẩn thanh Navbar và giao diện chính, sau đó hiện Bill toàn màn hình
+  document.querySelector('.navbar').style.display = 'none';
+  document.querySelector('.container').style.display = 'none';
+  document.getElementById('fullScreenBill').style.display = 'block';
+}
+
+function dongBillFullScreen() {
+  // Hiện lại giao diện chính, ẩn Bill đi
+  document.getElementById('fullScreenBill').style.display = 'none';
+  document.querySelector('.navbar').style.display = 'flex';
+  document.querySelector('.container').style.display = 'block';
+}
+
 </script>
+
+
+
+<!-- KHU VỰC BILL TOÀN MÀN HÌNH (Mặc định ẩn) -->
+<div id="fullScreenBill" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #f4f6f9; z-index: 10500; overflow-y: auto; padding: 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1a1a1a;">
+  
+  <!-- Nút Tắt Bill -->
+  <button onclick="dongBillFullScreen()" style="position: fixed; top: 15px; right: 15px; background: rgba(0,0,0,0.1); border: none; width: 36px; height: 36px; border-radius: 50%; font-size: 18px; font-weight: bold; color: #333; z-index: 10600;">✕</button>
+
+  <div style="text-align: center; max-width: 500px; margin: 0 auto; position: relative; padding-top: 10px;">
+      <!-- Logo VNPT -->
+      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/VNPT_Logo.svg/512px-VNPT_Logo.svg.png" style="height: 35px; margin-bottom: 5px;">
+      <div style="font-weight: 800; font-size: 16px;">VNPT - CAN THO</div>
+      <div style="font-size: 13px; color: #555;">11 Phan Dinh Phung, phuong Ninh Kieu, Tp Can Tho</div>
+      <div style="font-weight: 900; font-size: 18px; margin-top: 15px;">THÔNG BÁO CƯỚC</div>
+      <div style="font-size: 14px;">Kỳ cước: <span id="billKyCuoc"></span></div>
+  </div>
+  
+  <div style="margin-top: 25px; font-size: 15px; line-height: 1.6; max-width: 500px; margin-left: auto; margin-right: auto;">
+      <div style="font-size: 16px;"><b>Tên KH: <span id="billTenKH"></span></b></div>
+      <div>Số thuê bao: <span id="billSoMay"></span></div>
+      <div>Mã thanh toán: <span id="billMaKH"></span></div>
+      <div>Điện thoại LH: <span id="billSDT"></span></div>
+      <div>Địa chỉ: <span id="billDiaChi"></span></div>
+      
+      <div style="margin-top: 20px;">Nợ cũ: 0 đồng</div>
+      <div>Tiền cước phát sinh: <span id="billCuoc"></span> đồng</div>
+      <div style="font-size: 16px;"><b>Tổng tiền: <span id="billTongTien"></span> đồng</b></div>
+      <div style="text-decoration: underline; font-style: italic; font-size: 14px;">(Tổng tiền đã bao gồm thuế GTGT)</div>
+      
+      <div style="margin-top: 20px;">
+          Liên hệ nhân viên thu cước:<br>
+          <b>[KBH335944, Nguyễn Thành Long, 0945034424]</b>
+      </div>
+      
+      <div style="margin-top: 20px; font-size: 13px; color: #444; text-align: justify;">
+          QK truy cập website https://vnpt.com.vn de thanh toan cuoc truc tuyen, nhan hoa don va cuoc chi tiet. Dien thoai bao hong va Ho tro CSKH: 18001166
+      </div>
+      <div style="margin-top: 5px; font-size: 13px; color: #444;">
+          Thời gian in: <span id="billTime"></span>
+      </div>
+      <div style="text-align: center; font-weight: bold; margin-top: 30px; font-size: 16px;">Cảm ơn Quý khách hàng!</div>
+  </div>
+</div>
+
 </body>
 </html>
