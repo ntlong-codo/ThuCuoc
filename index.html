@@ -93,7 +93,7 @@
     </div>
   </div>
 
-  <!-- BỘ LỌC DỮ LIỆU --><!-- BỘ LỌC DỮ LIỆU -->
+  <!-- BỘ LỌC DỮ LIỆU -->
   <div class="card p-3 mb-3 shadow-sm border-0">
     <div class="row g-2">
       <!-- 1. Kỳ Cước -->
@@ -110,7 +110,7 @@
         </select>
       </div>
 
-      <!-- 3. BỔ SUNG: Hình Thức Thanh Toán (Nằm ngay sau Tuyến Thu) -->
+      <!-- 3. BỔ SUNG: Hình Thức Thanh Toán -->
       <div class="col-6 col-md-2">
         <label class="form-label fw-bold small">Hình Thức TT</label>
         <select id="selectHinhThuc" class="form-select form-select-sm" onchange="locKhachHang()">
@@ -125,13 +125,13 @@
       <div class="col-6 col-md-3">
         <label class="form-label fw-bold small">Lọc Trạng Thái</label>
         <select id="selectFilterStatus" class="form-select form-select-sm" onchange="locKhachHang()">
-  <option value="ALL">Tất cả trạng thái</option>
-  <option value="CHUATHU">Chưa Thu</option>
-  <option value="DATHU_CHUAGACH">Đã Thu chưa gạch</option>
-  <option value="DAGACH">Đã Gạch</option>
-  <option value="HEN">Có Ngày Hẹn</option>
-  <option value="CHECKED">Đã Checkin</option>
-</select>
+          <option value="ALL">Tất cả trạng thái</option>
+          <option value="CHUATHU">Chưa Thu</option>
+          <option value="DATHU_CHUAGACH">Đã Thu chưa gạch</option>
+          <option value="DAGACH">Đã Gạch</option>
+          <option value="HEN">Có Ngày Hẹn</option>
+          <option value="CHECKED">Đã Checkin</option>
+        </select>
       </div>
 
       <!-- 5. Tìm Kiếm Nhanh -->
@@ -186,18 +186,18 @@
       <div class="modal-body">
         <input type="hidden" id="editSomay">
         <!-- Ô CHỌN NGÀY HẸN TRONG MODAL -->
-<div class="mb-3">
-  <label class="form-label fw-bold">Ngày hẹn trả cước hàng tháng</label>
-  <select id="editNgayHen" class="form-select">
-    <option value="">-- Không hẹn --</option>
-    <!-- Tạo danh sách từ ngày 1 đến ngày 31 -->
-    <script>
-      for (let i = 1; i <= 31; i++) {
-        document.write(`<option value="${i}">Mùng ${i} hàng tháng (Ngày ${i})</option>`);
-      }
-    </script>
-  </select>
-</div>
+        <div class="mb-3">
+          <label class="form-label fw-bold">Ngày hẹn trả cước hàng tháng</label>
+          <select id="editNgayHen" class="form-select">
+            <option value="">-- Không hẹn --</option>
+            <!-- Tạo danh sách từ ngày 1 đến ngày 31 -->
+            <script>
+              for (let i = 1; i <= 31; i++) {
+                document.write(`<option value="${i}">Mùng ${i} hàng tháng (Ngày ${i})</option>`);
+              }
+            </script>
+          </select>
+        </div>
         <div class="mb-3">
           <label class="form-label fw-bold">Ghi Chú Thu Cước</label>
           <textarea id="editGhiChu" class="form-control" rows="3" placeholder="Ví dụ: Khách đi vắng, hẹn 15 tây trả..."></textarea>
@@ -210,6 +210,7 @@
     </div>
   </div>
 </div>
+
 <!-- MODAL SỬA THÔNG TIN KHÁCH HÀNG -->
 <div class="modal fade" id="editCustomerModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
@@ -258,6 +259,7 @@
     </div>
   </div>
 </div>
+
 <!-- MODAL THÊM KHÁCH MỚI -->
 <div class="modal fade" id="addModal" tabindex="-1">
   <div class="modal-dialog">
@@ -420,45 +422,31 @@
  function locKhachHang() {
     let keyword = document.getElementById("searchBox").value.toLowerCase();
     let statusFilter = document.getElementById("selectFilterStatus").value;
-    let hinhThucFilter = document.getElementById("selectHinhThuc").value; // Lấy giá trị bộ lọc Hình thức TT
+    let hinhThucFilter = document.getElementById("selectHinhThuc").value; 
 	let selectedThang = document.getElementById("selectThang").value;
 	
     let filtered = fullData.filter(item => {
-      // 1. Tìm kiếm theo từ khóa
       let matchText = item.TENTT.toLowerCase().includes(keyword) ||
                         item.SOMAY.toLowerCase().includes(keyword) ||
                         item.SO_DT.toLowerCase().includes(keyword) ||
                         item.MAKH.toLowerCase().includes(keyword) ||
                         item.DIACHITT.toLowerCase().includes(keyword);
 
-      // 2. Lọc theo Trạng Thái (Logic mới)
-    let matchStatus = true;
-    
-    if (statusFilter === "CHUATHU") {
-      // Chưa Thu: Cả DATHU, TUTT và TUTTSMS đều FALSE
-      matchStatus = !item.DATHU && !item.TUTT && !item.TUTTSMS;
-    } 
-    else if (statusFilter === "DATHU_CHUAGACH") {
-      // Đã Thu chưa gạch: Chỉ có DATHU = true (TUTT & TUTTSMS đều false)
-      matchStatus = item.DATHU && !item.TUTT && !item.TUTTSMS;
-    } 
-    else if (statusFilter === "DAGACH") {
-      // Đã Gạch: TUTT = true HOẶC TUTTSMS = true
-      matchStatus = item.TUTT || item.TUTTSMS;
-    } 
-    else if (statusFilter === "HEN") {
-      // Có Ngày Hẹn VÀ CHƯA thanh toán / chưa gạch (Cả DATHU, TUTT, TUTTSMS đều false)
-      let daThanhToan = item.DATHU || item.TUTT || item.TUTTSMS;
-      let coNgayHen = item.NGAYHEN && item.NGAYHEN.toString().trim() !== "";
-      
-      matchStatus = coNgayHen && !daThanhToan;
-    }
-    else if (statusFilter === "CHECKED") {
-      // Đã Checkin
-      matchStatus = !!(item.CHECK1 || item.CHECK2 || item.CHECK3 || item.CHECK4 || item.CHECK5);
-    }
+      let matchStatus = true;
+      if (statusFilter === "CHUATHU") {
+        matchStatus = !item.DATHU && !item.TUTT && !item.TUTTSMS;
+      } else if (statusFilter === "DATHU_CHUAGACH") {
+        matchStatus = item.DATHU && !item.TUTT && !item.TUTTSMS;
+      } else if (statusFilter === "DAGACH") {
+        matchStatus = item.TUTT || item.TUTTSMS;
+      } else if (statusFilter === "HEN") {
+        let daThanhToan = item.DATHU || item.TUTT || item.TUTTSMS;
+        let coNgayHen = item.NGAYHEN && item.NGAYHEN.toString().trim() !== "";
+        matchStatus = coNgayHen && !daThanhToan;
+      } else if (statusFilter === "CHECKED") {
+        matchStatus = !!(item.CHECK1 || item.CHECK2 || item.CHECK3 || item.CHECK4 || item.CHECK5);
+      }
 
-      // 3. Lọc theo Hình Thức Thanh Toán
       let matchHinhThuc = true;
       if (hinhThucFilter !== "ALL") {
         matchHinhThuc = (item.HINHTHUCTT || "").toLowerCase().includes(hinhThucFilter.toLowerCase());
@@ -467,7 +455,6 @@
       return matchText && matchStatus && matchHinhThuc;
     });
 
-    // Tính toán số liệu thống kê
     let tongCuoc = 0, daThu = 0, conNo = 0;
     filtered.forEach(i => {
       tongCuoc += i.CUOC;
@@ -480,14 +467,12 @@
     document.getElementById("statConNo").innerText = conNo.toLocaleString('vi-VN') + " đ";
     document.getElementById("statSoLuong").innerText = filtered.length + " khách";
 
-    // Hiển thị danh sách thẻ
     let html = "";
     filtered.forEach(item => {
       let isDaThu = item.DATHU;
       let isTuTT = item.TUTT;
       let isTuTTSMS = item.TUTTSMS;
 
-      // RÀNG BUỘC KHOÁ / DISABLE NÚT
       let disableThuTien = isTuTTSMS || isTuTT;
       let disableTuTT = isDaThu;
       let disableTuTTSMS = !isDaThu || isTuTT;
@@ -511,10 +496,14 @@
                 <span class="money-badge">${item.CUOC.toLocaleString('vi-VN')} đ</span>
               </div>
 
+              <!-- ĐÃ CẬP NHẬT: Nút Copy khi nhấn vào tên khách hàng -->
               <h6 class="fw-bold text-dark mb-1 d-flex justify-content-between align-items-center">
-                <span>${item.TENTT}</span>
-                <i class="bi bi-chevron-down text-muted small"></i> <!-- Mũi tên chỉ dẫn -->
+                <span onclick="copyThongTin(event, '${item.TENTT}', '${item.MAKH}', '${item.SOMAY}', '${item.DIACHITT}')" class="text-primary" style="cursor: pointer; position: relative; z-index: 2;" title="Bấm để copy thông tin khách">
+                  ${item.TENTT} <i class="bi bi-copy ms-1 text-muted" style="font-size: 0.85rem;"></i>
+                </span>
+                <i class="bi bi-chevron-down text-muted small"></i> 
               </h6>
+
               <div class="small text-muted mb-1"><i class="bi bi-phone"></i> ${item.SOMAY} | Mã: ${item.MAKH}</div>
               <div class="small text-muted mb-1"><i class="bi bi-geo-alt"></i> ${item.DIACHITT}</div>
 
@@ -642,15 +631,14 @@
 
   // CẬP NHẬT GHI CHÚ
   function openNoteModal(somay, ghichu, ngayhen) {
-  document.getElementById("editSomay").value = somay || "";
-  document.getElementById("editGhiChu").value = ghichu || "";
-  document.getElementById("editNgayHen").value = ngayhen || ""; // Gán giá trị ngày hẹn (1-31)
+    document.getElementById("editSomay").value = somay || "";
+    document.getElementById("editGhiChu").value = ghichu || "";
+    document.getElementById("editNgayHen").value = ngayhen || "";
 
-  // Khởi tạo và hiện Modal an toàn
-  let modalElem = document.getElementById('noteModal');
-  let myModal = bootstrap.Modal.getInstance(modalElem) || new bootstrap.Modal(modalElem);
-  myModal.show();
-}
+    let modalElem = document.getElementById('noteModal');
+    let myModal = bootstrap.Modal.getInstance(modalElem) || new bootstrap.Modal(modalElem);
+    myModal.show();
+  }
 
   function submitUpdateNote() {
     let thang = document.getElementById("selectThang").value;
@@ -692,51 +680,75 @@
       taiDanhSachKhach();
     });
   }
-  // 1. Hàm mở Modal và đổ dữ liệu khách hàng vào ô nhập
-function openEditCustomerModal(soMay, tenTT, soDT, sttTuyen, diaChi, hinhThuc) {
-  document.getElementById("editInfoSoMay").value = soMay;
-  document.getElementById("editInfoTenTT").value = tenTT || "";
-  document.getElementById("editInfoSoDT").value = soDT || "";
-  document.getElementById("editInfoSttTuyen").value = sttTuyen || "";
-  document.getElementById("editInfoDiaChi").value = diaChi || "";
-  document.getElementById("editInfoHinhThuc").value = hinhThuc || "Tại Nhà";
 
-  let modalElem = document.getElementById('editCustomerModal');
-  let myModal = bootstrap.Modal.getInstance(modalElem) || new bootstrap.Modal(modalElem);
-  myModal.show();
-}
+  function openEditCustomerModal(soMay, tenTT, soDT, sttTuyen, diaChi, hinhThuc) {
+    document.getElementById("editInfoSoMay").value = soMay;
+    document.getElementById("editInfoTenTT").value = tenTT || "";
+    document.getElementById("editInfoSoDT").value = soDT || "";
+    document.getElementById("editInfoSttTuyen").value = sttTuyen || "";
+    document.getElementById("editInfoDiaChi").value = diaChi || "";
+    document.getElementById("editInfoHinhThuc").value = hinhThuc || "Tại Nhà";
 
-// 2. Hàm gửi dữ liệu cập nhật về Backend Google Sheet
-// 2. Hàm gửi dữ liệu cập nhật về Backend Google Sheet (ĐÃ SỬA CHUẨN)
-function saveCustomerInfo() {
-  let payload = {
-    action: "updateCustomerInfo",
-    THANG_NO: document.getElementById("selectThang").value,
-    SOMAY: document.getElementById("editInfoSoMay").value,
-    TENTT: document.getElementById("editInfoTenTT").value,
-    SO_DT: document.getElementById("editInfoSoDT").value,
-    STTTUYEN: document.getElementById("editInfoSttTuyen").value,
-    DIACHITT: document.getElementById("editInfoDiaChi").value,
-    HINHTHUCTT: document.getElementById("editInfoHinhThuc").value
-  };
-
-  // Sử dụng callApi để chạy được trên cả Web App lẫn khi nhúng iframe
-  callApi({ action: "xuLyCapNhatTrangThai", data: payload }, function(res) {
-    if (res && res.message) {
-      alert(res.message);
-    } else {
-      alert("Đã cập nhật thông tin thành công!");
-    }
-    
-    // Tắt Modal sau khi lưu thành công
     let modalElem = document.getElementById('editCustomerModal');
-    let myModal = bootstrap.Modal.getInstance(modalElem);
-    if (myModal) myModal.hide();
+    let myModal = bootstrap.Modal.getInstance(modalElem) || new bootstrap.Modal(modalElem);
+    myModal.show();
+  }
+
+  function saveCustomerInfo() {
+    let payload = {
+      action: "updateCustomerInfo",
+      THANG_NO: document.getElementById("selectThang").value,
+      SOMAY: document.getElementById("editInfoSoMay").value,
+      TENTT: document.getElementById("editInfoTenTT").value,
+      SO_DT: document.getElementById("editInfoSoDT").value,
+      STTTUYEN: document.getElementById("editInfoSttTuyen").value,
+      DIACHITT: document.getElementById("editInfoDiaChi").value,
+      HINHTHUCTT: document.getElementById("editInfoHinhThuc").value
+    };
+
+    callApi({ action: "xuLyCapNhatTrangThai", data: payload }, function(res) {
+      if (res && res.message) { alert(res.message); } 
+      else { alert("Đã cập nhật thông tin thành công!"); }
+      
+      let modalElem = document.getElementById('editCustomerModal');
+      let myModal = bootstrap.Modal.getInstance(modalElem);
+      if (myModal) myModal.hide();
+      
+      taiDanhSachKhach();
+    });
+  }
+
+  // ĐÃ CẬP NHẬT: HÀM COPY THÔNG TIN
+  function copyThongTin(event, tenTT, maKH, soMay, diaChiTT) {
+    event.stopPropagation(); // Chặn không cho thẻ Accordion mở ra khi ấn vào tên
+    let noiDungCopy = "Tên KH: " + tenTT + "\nMã KH: " + maKH + "\nSố máy: " + soMay + "\nĐịa chỉ: " + diaChiTT;
     
-    // Tải lại danh sách khách hàng
-    taiDanhSachKhach();
-  });
-}
+    navigator.clipboard.writeText(noiDungCopy).then(function() {
+      hienThiThongBao("✅ Đã copy thông tin: " + tenTT);
+    }).catch(function(err) {
+      alert("Lỗi copy: " + err);
+    });
+  }
+
+  // ĐÃ CẬP NHẬT: HÀM HIỂN THỊ THÔNG BÁO COPY (TOAST)
+  function hienThiThongBao(msg) {
+    let toast = document.getElementById("toastMsg");
+    if (!toast) {
+      toast = document.createElement("div");
+      toast.id = "toastMsg";
+      toast.style.cssText = "position:fixed; bottom:30px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.85); color:white; padding:10px 20px; border-radius:20px; z-index:9999; font-size:14px; font-weight:bold; white-space:nowrap; box-shadow:0 4px 10px rgba(0,0,0,0.3); transition: opacity 0.3s; opacity: 1;";
+      document.body.appendChild(toast);
+    }
+    toast.innerHTML = msg;
+    toast.style.opacity = "1";
+    toast.style.display = "block";
+    
+    // Tự động ẩn sau 2 giây
+    setTimeout(() => { 
+      toast.style.opacity = "0"; 
+      setTimeout(() => { toast.style.display = "none"; }, 300); 
+    }, 2000);
+  }
 </script>
 </body>
 </html>
