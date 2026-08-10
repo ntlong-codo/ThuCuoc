@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hệ Thống Thu Cước Chuyên Nghiệp</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    body { background-color: #f0f2f5; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    .card-customer { border: none; border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); transition: all 0.2s; background: #fff; }
+    .card-customer.dathu { background-color: #e8f5e9; border-left: 6px solid #2e7d32; }
+    .card-customer.tutt { border-right: 6px solid #0d6efd; }
+    .stt-badge { background: #0d6efd; color: #fff; font-weight: bold; width: 30px; height: 30px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.9rem; }
+    .money-badge { font-size: 1.15rem; font-weight: 800; color: #d32f2f; }
+    .stat-card { border: none; border-radius: 10px; padding: 12px; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    .action-btn { border-radius: 8px; font-weight: 600; }
+  </style>
+</head>
+<body>
+
+<!-- NAVBAR THANH TIÊU ĐỀ -->
+<nav class="navbar navbar-dark bg-primary mb-3 shadow-sm">
+  <div class="container-fluid">
+    <span class="navbar-brand mb-0 h1 fw-bold"><i class="bi bi-wallet2 me-2"></i> QUẢN LÝ THU CƯỚC</span>
+    <button class="btn btn-light btn-sm fw-bold" data-bs-toggle="modal" data-bs-target="#configModal">
+      <i class="bi bi-gear-fill me-1"></i> Cấu hình API
+    </button>
+  </div>
+</nav>
+
+<div class="container mb-5">
+
+  <!-- BẢNG THỐNG KÊ CHI TIẾT -->
+  <div class="row g-2 mb-3">
+    <div class="col-6 col-md-3">
+      <div class="stat-card border-start border-4 border-primary">
+        <div class="text-muted small fw-bold">TỔNG CƯỚC</div>
+        <div class="fw-bold text-primary fs-6" id="statTongCuoc">0 đ</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card border-start border-4 border-success">
+        <div class="text-muted small fw-bold">ĐÃ THU TIỀN</div>
+        <div class="fw-bold text-success fs-6" id="statDaThu">0 đ</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card border-start border-4 border-danger">
+        <div class="text-muted small fw-bold">CÒN NỢ</div>
+        <div class="fw-bold text-danger fs-6" id="statConNo">0 đ</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card border-start border-4 border-warning">
+        <div class="text-muted small fw-bold">SỐ LƯỢNG</div>
+        <div class="fw-bold text-dark fs-6" id="statSoLuong">0 khách</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BỘ LỌC DỮ LIỆU -->
+  <div class="card p-3 mb-3 shadow-sm border-0">
+    <div class="row g-2">
+      <div class="col-6 col-md-3">
+        <label class="form-label fw-bold small">Kỳ Cước (Tháng)</label>
+        <select id="selectThang" class="form-select form-select-sm" onchange="taiDanhSachKhach()"></select>
+      </div>
+      <div class="col-6 col-md-3">
+        <label class="form-label fw-bold small">Tuyến Thu</label>
+        <select id="selectTuyen" class="form-select form-select-sm" onchange="taiDanhSachKhach()">
+          <option value="ALL">-- Tất cả tuyến --</option>
+        </select>
+      </div>
+      <div class="col-6 col-md-3">
+        <label class="form-label fw-bold small">Lọc Trạng Thái</label>
+        <select id="selectFilterStatus" class="form-select form-select-sm" onchange="locKhachHang()">
+          <option value="ALL">Tất cả trạng thái</option>
+          <option value="CHUATHU">Chưa thu tiền</option>
+          <option value="DATHU">Đã thu tiền</option>
+          <option value="HEN">Có ngày hẹn trả</option>
+          <option value="CHECKED">Đã Check-in điểm thu</option>
+        </select>
+      </div>
+      <div class="col-6 col-md-3">
+        <label class="form-label fw-bold small">Tìm Kiếm Nhanh</label>
+        <input type="text" id="searchBox" class="form-control form-control-sm" placeholder="Tên, Số máy, SĐT..." onkeyup="locKhachHang()">
+      </div>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
+      <button class="btn btn-sm btn-outline-secondary fw-bold" onclick="taiDanhSachKhach()">
+        <i class="bi bi-arrow-clockwise me-1"></i> Tải lại
+      </button>
+      <button class="btn btn-sm btn-success fw-bold" data-bs-toggle="modal" data-bs-target="#addModal">
+        <i class="bi bi-person-plus-fill me-1"></i> Thêm Khách Mới
+      </button>
+    </div>
+  </div>
+
+  <!-- DANH SÁCH THẺ KHÁCH HÀNG -->
+  <div id="customerList" class="row g-2"></div>
+</div>
+
+<!-- MODAL CẤU HÌNH API URL -->
+<div class="modal fade" id="configModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title fw-bold"><i class="bi bi-gear"></i> Cấu Hình URL Web App API</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <label class="form-label fw-bold">Dán Web App URL của Apps Script vào đây:</label>
+        <textarea id="apiUrlInput" class="form-control" rows="3" placeholder="https://script.google.com/macros/s/.../exec"></textarea>
+        <div class="form-text mt-2 text-muted">Mã URL này lấy từ: <b>Triển khai (Deploy) -> Quản lý bản triển khai (Manage deployments) -> URL Web App</b>.</div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary fw-bold" onclick="saveApiUrl()">Lưu Cấu Hình</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL SỬA GHI CHÚ & NGÀY HẸN -->
+<div class="modal fade" id="noteModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-dark text-white">
+        <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square"></i> Cập Nhật Ghi Chú & Ngày Hẹn</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="editSomay">
+        <div class="mb-3">
+          <label class="form-label fw-bold">Ngày Hẹn Trả Money</label>
+          <input type="date" id="editNgayHen" class="form-control">
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-bold">Ghi Chú Thu Cước</label>
+          <textarea id="editGhiChu" class="form-control" rows="3" placeholder="Ví dụ: Khách đi vắng, hẹn 15 tây trả..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+        <button type="button" class="btn btn-primary fw-bold" onclick="submitUpdateNote()">Lưu Thông Tin</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL THÊM KHÁCH MỚI -->
+<div class="modal fade" id="addModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title fw-bold"><i class="bi bi-person-plus"></i> Thêm Khách Hàng Mới</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="addForm">
+          <div class="row g-2 mb-2">
+            <div class="col-6"><label class="small fw-bold">Tuyến</label><input type="text" id="addTUYEN" class="form-control form-control-sm" required></div>
+            <div class="col-6"><label class="small fw-bold">STT Tuyến</label><input type="number" id="addSTTTUYEN" class="form-control form-control-sm" value="1"></div>
+          </div>
+          <div class="row g-2 mb-2">
+            <div class="col-6"><label class="small fw-bold">Số Máy / Thuê Bao (*)</label><input type="text" id="addSOMAY" class="form-control form-control-sm" required></div>
+            <div class="col-6"><label class="small fw-bold">Mã Khách Hàng</label><input type="text" id="addMAKH" class="form-control form-control-sm"></div>
+          </div>
+          <div class="mb-2"><label class="small fw-bold">Tên Thanh Toán (*)</label><input type="text" id="addTENTT" class="form-control form-control-sm" required></div>
+          <div class="row g-2 mb-2">
+            <div class="col-6"><label class="small fw-bold">Số Điện Thoại</label><input type="text" id="addSODT" class="form-control form-control-sm"></div>
+            <div class="col-6"><label class="small fw-bold">Số Tiền Cước</label><input type="number" id="addCUOC" class="form-control form-control-sm" value="0"></div>
+          </div>
+          <div class="mb-2"><label class="small fw-bold">Địa Chỉ Thanh Toán</label><input type="text" id="addDIACHI" class="form-control form-control-sm"></div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+        <button type="button" class="btn btn-success fw-bold" onclick="submitAddCustomer()">Lưu Khách Hàng</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  let API_URL = localStorage.getItem("THUCUOC_API_URL") || "";
+  let fullData = [];
+
+  window.onload = function() {
+    document.getElementById("apiUrlInput").value = API_URL;
+    if (!API_URL && typeof google === "undefined") {
+      new bootstrap.Modal(document.getElementById('configModal')).show();
+    } else {
+      khoiTao();
+    }
+  };
+
+  function saveApiUrl() {
+    let url = document.getElementById("apiUrlInput").value.trim();
+    if (!url) { alert("Vui lòng dán Web App URL!"); return; }
+    localStorage.setItem("THUCUOC_API_URL", url);
+    API_URL = url;
+    bootstrap.Modal.getInstance(document.getElementById('configModal')).hide();
+    khoiTao();
+  }
+
+  // HÀM GỌI DỮ LIỆU UNIVERSAL (CHẠY ĐƯỢC CẢ FETCH KHÁC MIỀN VÀ GOOGLE SCRIPT RUN)
+  function callApi(payload, callback) {
+    if (typeof google !== "undefined" && google.script && google.script.run) {
+      // Chạy trực tiếp bên trong Apps Script
+      if (payload.action === "getInitialData") {
+        google.script.run.withSuccessHandler(callback).getInitialData();
+      } else if (payload.action === "layDuLieuTuyen") {
+        google.script.run.withSuccessHandler(callback).layDuLieuTuyen(payload.tuyenId, payload.thang);
+      } else if (payload.action === "xuLyThemKhach") {
+        google.script.run.withSuccessHandler(callback).xuLyThemKhach(payload);
+      } else if (payload.action === "xuLyCapNhatTrangThai") {
+        google.script.run.withSuccessHandler(callback).xuLyCapNhatTrangThai(payload);
+      }
+    } else {
+      // Chạy qua fetch() API ngoài
+      if (!API_URL) { alert("Chưa cấu hình API URL!"); return; }
+      fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(payload)
+      })
+      .then(res => res.json())
+      .then(data => callback(data))
+      .catch(err => {
+        console.error(err);
+        alert("Lỗi kết nối API: " + err.message);
+      });
+    }
+  }
+
+  function khoiTao() {
+    callApi({ action: "getInitialData" }, function(res) {
+      if (res.status === "success") {
+        let selectThang = document.getElementById("selectThang");
+        selectThang.innerHTML = res.listThang.map(t => `<option value="${t}">${t}</option>`).join('');
+
+        let selectTuyen = document.getElementById("selectTuyen");
+        let htmlTuyen = `<option value="ALL">-- Tất cả tuyến --</option>`;
+        htmlTuyen += res.listTuyen.map(t => `<option value="${t.MATUYEN}">${t.TENTUYEN}</option>`).join('');
+        selectTuyen.innerHTML = htmlTuyen;
+
+        taiDanhSachKhach();
+      }
+    });
+  }
+
+  function taiDanhSachKhach() {
+    let thang = document.getElementById("selectThang").value;
+    let tuyen = document.getElementById("selectTuyen").value;
+
+    document.getElementById("customerList").innerHTML = `
+      <div class="text-center py-5">
+        <div class="spinner-border text-primary"></div>
+        <div class="mt-2 text-muted fw-bold">Đang tải dữ liệu kỳ ${thang}...</div>
+      </div>`;
+
+    callApi({ action: "layDuLieuTuyen", tuyenId: tuyen, thang: thang }, renderList);
+  }
+
+  function renderList(res) {
+    if (res.status !== "success") { alert(res.message); return; }
+    fullData = res.data;
+    locKhachHang();
+  }
+
+  function locKhachHang() {
+    let keyword = document.getElementById("searchBox").value.toLowerCase();
+    let statusFilter = document.getElementById("selectFilterStatus").value;
+
+    let filtered = fullData.filter(item => {
+      let matchText = item.TENTT.toLowerCase().includes(keyword) ||
+                        item.SOMAY.toLowerCase().includes(keyword) ||
+                        item.SO_DT.toLowerCase().includes(keyword) ||
+                        item.MAKH.toLowerCase().includes(keyword) ||
+                        item.DIACHITT.toLowerCase().includes(keyword);
+
+      let matchStatus = true;
+      if (statusFilter === "CHUATHU") matchStatus = !item.DATHU;
+      if (statusFilter === "DATHU") matchStatus = item.DATHU;
+      if (statusFilter === "HEN") matchStatus = item.NGAYHEN !== "";
+      if (statusFilter === "CHECKED") matchStatus = (item.CHECK1 || item.CHECK2 || item.CHECK3);
+
+      return matchText && matchStatus;
+    });
+
+    // Tính toán số liệu
+    let tongCuoc = 0, daThu = 0, conNo = 0;
+    filtered.forEach(i => {
+      tongCuoc += i.CUOC;
+      if (i.DATHU) daThu += i.CUOC;
+      else conNo += i.CUOC;
+    });
+
+    document.getElementById("statTongCuoc").innerText = tongCuoc.toLocaleString('vi-VN') + " đ";
+    document.getElementById("statDaThu").innerText = daThu.toLocaleString('vi-VN') + " đ";
+    document.getElementById("statConNo").innerText = conNo.toLocaleString('vi-VN') + " đ";
+    document.getElementById("statSoLuong").innerText = filtered.length + " khách";
+
+    // Hiển thị danh sách thẻ
+    let html = "";
+    filtered.forEach(item => {
+      let isDaThu = item.DATHU;
+      let isTuTT = item.TUTT || item.TUTTSMS;
+      let checkLog = [item.CHECK1, item.CHECK2, item.CHECK3, item.CHECK4, item.CHECK5].filter(c => c).join(" | ");
+
+      html += `
+        <div class="col-12 col-md-6 col-lg-4">
+          <div class="card card-customer p-3 ${isDaThu ? 'dathu' : ''} ${isTuTT ? 'tutt' : ''}">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <div>
+                <span class="stt-badge me-1">${item.STTTUYEN}</span>
+                <span class="badge bg-secondary">${item.TUYEN}</span>
+                ${isTuTT ? '<span class="badge bg-primary">Đã Gạch</span>' : ''}
+              </div>
+              <span class="money-badge">${item.CUOC.toLocaleString('vi-VN')} đ</span>
+            </div>
+
+            <h6 class="fw-bold text-dark mb-1">${item.TENTT}</h6>
+            <div class="small text-muted mb-1"><i class="bi bi-phone"></i> ${item.SOMAY} | Mã: ${item.MAKH}</div>
+            <div class="small text-muted mb-1"><i class="bi bi-geo-alt"></i> ${item.DIACHITT}</div>
+
+            ${item.NGAYHEN ? `<div class="small text-danger fw-bold"><i class="bi bi-calendar-event me-1"></i> Hẹn: ${item.NGAYHEN}</div>` : ''}
+            ${item.GHICHU1 ? `<div class="small text-dark fst-italic bg-light p-1 rounded my-1" style="color: blue;"><i class="bi bi-chat-left-text me-1"></i> ${item.GHICHU1}</div>` : ''}
+            ${checkLog ? `<div class="small text-success my-1" style="font-size:0.75rem;"><i class="bi bi-clock-history me-1"></i> ${checkLog}</div>` : ''}
+
+            <!-- NÚT LIÊN HỆ ĐIỆN THOẠI & MAPS -->
+            <div class="d-flex gap-1 my-2">
+              <a href="tel:${item.SO_DT}" class="btn btn-sm btn-outline-secondary flex-fill"><i class="bi bi-telephone-fill"></i> Gọi</a>
+              <a href="https://zalo.me/${item.SO_DT}" target="_blank" class="btn btn-sm btn-outline-info flex-fill"><i class="bi bi-chat-dots-fill"></i> Zalo</a>
+              <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.DIACHITT)}" target="_blank" class="btn btn-sm btn-outline-danger flex-fill"><i class="bi bi-map-fill"></i> Map</a>
+            </div>
+
+            <!-- NÚT THAO TÁC TÁC NGHIỆP -->
+            <div class="row g-1 mt-1 pt-2 border-top">
+              <div class="col-6">
+                <button class="btn btn-sm ${isDaThu ? 'btn-success' : 'btn-outline-success'} w-100 action-btn" onclick="toggleThuTien('${item.SOMAY}', ${!isDaThu})">
+                  <i class="bi ${isDaThu ? 'bi-check-circle-fill' : 'bi-circle'}"></i> ${isDaThu ? 'ĐÃ THU' : 'THU TIỀN'}
+                </button>
+              </div>
+              <div class="col-6">
+                <button class="btn btn-sm btn-outline-primary w-100 action-btn" onclick="checkIn('${item.SOMAY}')">
+                  <i class="bi bi-geo-fill"></i> Check-in
+                </button>
+              </div>
+              <div class="col-6 mt-1">
+                <button class="btn btn-sm btn-outline-warning text-dark w-100 action-btn" onclick="openNoteModal('${item.SOMAY}', '${item.GHICHU1}', '${item.NGAYHEN}')">
+                  <i class="bi bi-pencil"></i> Ghi Chú
+                </button>
+              </div>
+              <div class="col-6 mt-1">
+                <button class="btn btn-sm ${isTuTT ? 'btn-primary' : 'btn-outline-secondary'} w-100 action-btn" onclick="toggleTuTT('${item.SOMAY}', ${!isTuTT})">
+                  <i class="bi bi-check2-all"></i> Gạch Cước
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      `;
+    });
+
+    document.getElementById("customerList").innerHTML = html || `<div class="text-center py-5 text-muted">Không tìm thấy khách hàng nào</div>`;
+  }
+
+  // THAO TÁC THU TIỀN
+  function toggleThuTien(somay, status) {
+    let thang = document.getElementById("selectThang").value;
+    callApi({ action: "xuLyCapNhatTrangThai", data: { action: "toggleDaThu", THANG_NO: thang, SOMAY: somay, DATHU: status } }, function() {
+      taiDanhSachKhach();
+    });
+  }
+
+  // THAO TÁC GẠCH CƯỚC / TUTT
+  function toggleTuTT(somay, status) {
+    let thang = document.getElementById("selectThang").value;
+    callApi({ action: "xuLyCapNhatTrangThai", data: { action: "toggleTuTT", THANG_NO: thang, SOMAY: somay, TUTT: status, TUTTSMS: status } }, function() {
+      taiDanhSachKhach();
+    });
+  }
+
+  // THAO TÁC CHECK-IN CÓ TỌA ĐỘ GPS
+  function checkIn(somay) {
+    let thang = document.getElementById("selectThang").value;
+    let now = new Date();
+    let timeStr = now.getHours() + ":" + String(now.getMinutes()).padStart(2, '0') + " " + now.getDate() + "/" + (now.getMonth() + 1);
+
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(function(pos) {
+        let loc = pos.coords.latitude.toFixed(4) + "," + pos.coords.longitude.toFixed(4);
+        guiCheckIn(thang, somay, timeStr, loc);
+      }, function() {
+        guiCheckIn(thang, somay, timeStr, "");
+      });
+    } else {
+      guiCheckIn(thang, somay, timeStr, "");
+    }
+  }
+
+  function guiCheckIn(thang, somay, timeStr, locationNote) {
+    callApi({ action: "xuLyCapNhatTrangThai", data: { action: "checkIn", THANG_NO: thang, SOMAY: somay, timeStr: timeStr, locationNote: locationNote } }, function(res) {
+      alert("Đã ghi nhận Check-in!");
+      taiDanhSachKhach();
+    });
+  }
+
+  // CẬP NHẬT GHI CHÚ
+  function openNoteModal(somay, ghichu, ngayhen) {
+    document.getElementById("editSomay").value = somay;
+    document.getElementById("editGhiChu").value = ghichu;
+    document.getElementById("editNgayHen").value = ngayhen;
+    new bootstrap.Modal(document.getElementById('noteModal')).show();
+  }
+
+  function submitUpdateNote() {
+    let thang = document.getElementById("selectThang").value;
+    let payload = {
+      action: "updateNote",
+      THANG_NO: thang,
+      SOMAY: document.getElementById("editSomay").value,
+      GHICHU1: document.getElementById("editGhiChu").value,
+      NGAYHEN: document.getElementById("editNgayHen").value
+    };
+
+    callApi({ action: "xuLyCapNhatTrangThai", data: payload }, function(res) {
+      bootstrap.Modal.getInstance(document.getElementById('noteModal')).hide();
+      taiDanhSachKhach();
+    });
+  }
+
+  // THÊM KHÁCH MỚI
+  function submitAddCustomer() {
+    let thang = document.getElementById("selectThang").value;
+    let payload = {
+      THANG_NO: thang,
+      TUYEN: document.getElementById("addTUYEN").value,
+      STTTUYEN: document.getElementById("addSTTTUYEN").value,
+      SOMAY: document.getElementById("addSOMAY").value,
+      MAKH: document.getElementById("addMAKH").value,
+      TENTT: document.getElementById("addTENTT").value,
+      SO_DT: document.getElementById("addSODT").value,
+      CUOC: document.getElementById("addCUOC").value,
+      DIACHITT: document.getElementById("addDIACHI").value
+    };
+
+    if (!payload.SOMAY || !payload.TENTT) { alert("Vui lòng nhập Số máy và Tên!"); return; }
+
+    callApi({ action: "xuLyThemKhach", data: payload }, function(res) {
+      alert(res.message);
+      bootstrap.Modal.getInstance(document.getElementById('addModal')).hide();
+      document.getElementById("addForm").reset();
+      taiDanhSachKhach();
+    });
+  }
+</script>
+</body>
+</html>
