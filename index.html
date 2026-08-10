@@ -8,6 +8,8 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
   <style>
     body { background-color: #f0f2f5; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+	.card-clickable { cursor: pointer; user-select: none; }
+	.card-clickable:hover { opacity: 0.9; }
     .card-customer { border: none; border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); transition: all 0.2s; background: #fff; }
     .card-customer.dathu { background-color: #e8f5e9; border-left: 6px solid #2e7d32; }
     .card-customer.tutt { border-right: 6px solid #0d6efd; }
@@ -207,7 +209,54 @@
     </div>
   </div>
 </div>
+<!-- MODAL SỬA THÔNG TIN KHÁCH HÀNG -->
+<div class="modal fade" id="editCustomerModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-info text-dark">
+        <h5 class="modal-title fw-bold"><i class="bi bi-person-gear me-2"></i>Sửa Thông Tin Khách Hàng</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="editInfoSoMay">
+        
+        <div class="mb-2">
+          <label class="form-label fw-bold small">Tên Khách Hàng</label>
+          <input type="text" id="editInfoTenTT" class="form-control form-control-sm">
+        </div>
 
+        <div class="row g-2 mb-2">
+          <div class="col-6">
+            <label class="form-label fw-bold small">Số Điện Thoại</label>
+            <input type="text" id="editInfoSoDT" class="form-control form-control-sm">
+          </div>
+          <div class="col-6">
+            <label class="form-label fw-bold small">Thứ Tự Tuyến (STT)</label>
+            <input type="number" id="editInfoSttTuyen" class="form-control form-control-sm">
+          </div>
+        </div>
+
+        <div class="mb-2">
+          <label class="form-label fw-bold small">Địa Chỉ</label>
+          <input type="text" id="editInfoDiaChi" class="form-control form-control-sm">
+        </div>
+
+        <div class="mb-2">
+          <label class="form-label fw-bold small">Hình Thức Thanh Toán</label>
+          <select id="editInfoHinhThuc" class="form-select form-select-sm">
+            <option value="Tại Nhà">Tại Nhà</option>
+            <option value="Zalo">Zalo</option>
+            <option value="Tự Đóng">Tự Đóng</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Hủy</button>
+        <button type="button" class="btn btn-sm btn-primary fw-bold" onclick="saveCustomerInfo()">Lưu Thay Đổi</button>
+      </div>
+    </div>
+  </div>
+</div>
 <!-- MODAL THÊM KHÁCH MỚI -->
 <div class="modal fade" id="addModal" tabindex="-1">
   <div class="modal-dialog">
@@ -439,76 +488,98 @@
 
       // RÀNG BUỘC KHOÁ / DISABLE NÚT
       let disableThuTien = isTuTTSMS || isTuTT;
-      let disableTuTT = isDaThu; // Nếu ĐÃ THU thì không bấm "Đã đóng Tiền"
-      let disableTuTTSMS = !isDaThu || isTuTT; // Chưa "Thu Tiền" (!isDaThu) HOẶC đã bấm "Đã đóng Tiền" thì KHÔNG bấm "Gạch Cước"
+      let disableTuTT = isDaThu;
+      let disableTuTTSMS = !isDaThu || isTuTT;
 
       let checkLog = [item.CHECK1, item.CHECK2, item.CHECK3, item.CHECK4, item.CHECK5].filter(c => c).join(" | ");
 
       html += `
         <div class="col-12 col-md-6 col-lg-4">
           <div class="card card-customer p-3 ${isDaThu ? 'dathu' : ''} ${(isTuTT || isTuTTSMS) ? 'tutt' : ''}">
-            <div class="d-flex justify-content-between align-items-center mb-1">
-              <div>
-                <span class="stt-badge me-1">${item.STTTUYEN}</span>
-                <span class="badge bg-secondary">${item.TUYEN}</span>
-                <span class="badge bg-info text-dark">${item.HINHTHUCTT || 'Thu tại nhà'}</span>
-                ${isTuTT ? '<span class="badge bg-success">Đã Đóng</span>' : ''}
-                ${isTuTTSMS ? '<span class="badge bg-primary">Đã Gạch SMS</span>' : ''}
+            
+            <!-- 👉 1. KHU VỰC BẤM VÀO ĐỂ MỞ / ĐÓNG NÚT -->
+            <div class="card-clickable" data-bs-toggle="collapse" data-bs-target="#actionGroup-${item.SOMAY}">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <div>
+                  <span class="stt-badge me-1">${item.STTTUYEN}</span>
+                  <span class="badge bg-secondary">${item.TUYEN}</span>
+                  <span class="badge bg-info text-dark">${item.HINHTHUCTT || 'Thu tại nhà'}</span>
+                  ${isTuTT ? '<span class="badge bg-success">Đã Đóng</span>' : ''}
+                  ${isTuTTSMS ? '<span class="badge bg-primary">Đã Gạch SMS</span>' : ''}
+                </div>
+                <span class="money-badge">${item.CUOC.toLocaleString('vi-VN')} đ</span>
               </div>
-              <span class="money-badge">${item.CUOC.toLocaleString('vi-VN')} đ</span>
+
+              <h6 class="fw-bold text-dark mb-1 d-flex justify-content-between align-items-center">
+                <span>${item.TENTT}</span>
+                <i class="bi bi-chevron-down text-muted small"></i> <!-- Mũi tên chỉ dẫn -->
+              </h6>
+              <div class="small text-muted mb-1"><i class="bi bi-phone"></i> ${item.SOMAY} | Mã: ${item.MAKH}</div>
+              <div class="small text-muted mb-1"><i class="bi bi-geo-alt"></i> ${item.DIACHITT}</div>
+
+              ${item.NGAYHEN ? `<div class="small text-danger fw-bold"><i class="bi bi-calendar-event me-1"></i> Hẹn: Ngày ${item.NGAYHEN} (Dự kiến: ${item.NGAYHEN}/${selectedThang})</div>` : ''}
+              ${item.GHICHU1 ? `<div class="small text-primary fst-italic bg-light p-1 rounded my-1"><i class="bi bi-chat-left-text me-1"></i> ${item.GHICHU1}</div>` : ''}
+              ${checkLog ? `<div class="small text-success my-1" style="font-size:0.75rem;"><i class="bi bi-clock-history me-1"></i> ${checkLog}</div>` : ''}
             </div>
 
-            <h6 class="fw-bold text-dark mb-1">${item.TENTT}</h6>
-            <div class="small text-muted mb-1"><i class="bi bi-phone"></i> ${item.SOMAY} | Mã: ${item.MAKH}</div>
-            <div class="small text-muted mb-1"><i class="bi bi-geo-alt"></i> ${item.DIACHITT}</div>
-
-            ${item.NGAYHEN ? `<div class="small text-danger fw-bold"><i class="bi bi-calendar-event me-1"></i> Hẹn: Ngày ${item.NGAYHEN} (Dự kiến: ${item.NGAYHEN}/${selectedThang})</div>` : ''}
-            ${item.GHICHU1 ? `<div class="small text-dark fst-italic bg-light p-1 rounded my-1" style="color: blue;"><i class="bi bi-chat-left-text me-1"></i> ${item.GHICHU1}</div>` : ''}
-            ${checkLog ? `<div class="small text-success my-1" style="font-size:0.75rem;"><i class="bi bi-clock-history me-1"></i> ${checkLog}</div>` : ''}
-
-            <!-- NÚT LIÊN HỆ ĐIỆN THOẠI & ZALO -->
-            <div class="d-flex gap-1 my-2">
-              <a href="tel:${item.SO_DT}" class="btn btn-sm btn-outline-secondary flex-fill"><i class="bi bi-telephone-fill"></i> Gọi</a>
-              <a href="https://zalo.me/${item.SO_DT}" target="_blank" class="btn btn-sm btn-outline-info flex-fill"><i class="bi bi-chat-dots-fill"></i> Zalo</a>
-            </div>
-
-            <!-- NÚT THAO TÁC TÁC NGHIỆP -->
-            <div class="row g-1 mt-1 pt-2 border-top">
-              <div class="col-6">
-                <button class="btn btn-sm ${isDaThu ? 'btn-success' : 'btn-outline-success'} w-100 action-btn" 
-                        onclick="toggleThuTien('${item.SOMAY}', ${!isDaThu})" 
-                        ${disableThuTien ? 'disabled' : ''}>
-                  <i class="bi ${isDaThu ? 'bi-check-circle-fill' : 'bi-circle'}"></i> ${isDaThu ? 'ĐÃ THU' : 'THU TIỀN'}
-                </button>
+            <!-- 👉 2. CỤM NÚT THAO TÁC (MẶC ĐỊNH BỊ ẨN BỞI CLASS "collapse") -->
+            <div class="collapse border-top mt-2 pt-2" id="actionGroup-${item.SOMAY}">
+              
+              <!-- NÚT LIÊN HỆ ĐIỆN THOẠI & ZALO -->
+              <div class="d-flex gap-1 mb-2">
+                <a href="tel:${item.SO_DT}" class="btn btn-sm btn-outline-secondary flex-fill"><i class="bi bi-telephone-fill"></i> Gọi</a>
+                <a href="https://zalo.me/${item.SO_DT}" target="_blank" class="btn btn-sm btn-outline-info flex-fill"><i class="bi bi-chat-dots-fill"></i> Zalo</a>
               </div>
 
-              <div class="col-6">
-                <button class="btn btn-sm ${isTuTT ? 'btn-success' : 'btn-outline-success'} w-100 action-btn" 
-                        onclick="toggleTuTT('${item.SOMAY}', ${!isTuTT})" 
-                        ${disableTuTT ? 'disabled' : ''}>
-                  <i class="bi ${isTuTT ? 'bi-check-square-fill' : 'bi-square'}"></i> Đã đóng Tiền
-                </button>
+              <!-- NÚT THAO TÁC TÁC NGHIỆP -->
+              <div class="row g-1">
+                <div class="col-6">
+                  <button class="btn btn-sm ${isDaThu ? 'btn-success' : 'btn-outline-success'} w-100 action-btn" 
+                          onclick="toggleThuTien('${item.SOMAY}', ${!isDaThu})" 
+                          ${disableThuTien ? 'disabled' : ''}>
+                    <i class="bi ${isDaThu ? 'bi-check-circle-fill' : 'bi-circle'}"></i> ${isDaThu ? 'ĐÃ THU' : 'THU TIỀN'}
+                  </button>
+                </div>
+
+                <div class="col-6">
+                  <button class="btn btn-sm ${isTuTT ? 'btn-success' : 'btn-outline-success'} w-100 action-btn" 
+                          onclick="toggleTuTT('${item.SOMAY}', ${!isTuTT})" 
+                          ${disableTuTT ? 'disabled' : ''}>
+                    <i class="bi ${isTuTT ? 'bi-check-square-fill' : 'bi-square'}"></i> Đã đóng Tiền
+                  </button>
+                </div>
+
+                <div class="col-6 mt-1">
+                  <button class="btn btn-sm ${isTuTTSMS ? 'btn-primary' : 'btn-outline-primary'} w-100 action-btn" 
+                          onclick="toggleTuTTSMS('${item.SOMAY}', ${!isTuTTSMS})" 
+                          ${disableTuTTSMS ? 'disabled' : ''}>
+                    <i class="bi bi-check2-all"></i> Gạch Cước
+                  </button>
+                </div>
+
+                <div class="col-6 mt-1">
+                  <button class="btn btn-sm btn-outline-secondary w-100 action-btn" onclick="checkIn('${item.SOMAY}')">
+                    <i class="bi bi-geo-fill"></i> Check-in
+                  </button>
+                </div>
+
+                <!-- NÚT GHI CHÚ & NGÀY HẸN -->
+                <div class="col-6 mt-1">
+                  <button class="btn btn-sm btn-outline-warning text-dark w-100 action-btn" 
+                          onclick="openNoteModal('${item.SOMAY}', '${item.GHICHU1}', '${item.NGAYHEN}')">
+                    <i class="bi bi-pencil"></i> Ghi Chú
+                  </button>
+                </div>
+
+                <!-- NÚT SỬA THÔNG TIN KHÁCH HÀNG -->
+                <div class="col-6 mt-1">
+                  <button class="btn btn-sm btn-outline-info text-dark w-100 action-btn" 
+                          onclick="openEditCustomerModal('${item.SOMAY}', '${item.TENTT}', '${item.SO_DT}', '${item.STTTUYEN}', '${item.DIACHITT}', '${item.HINHTHUCTT || ''}')">
+                    <i class="bi bi-person-gear"></i> Sửa Thông Tin
+                  </button>
+                </div>
               </div>
 
-              <div class="col-6 mt-1">
-                <button class="btn btn-sm ${isTuTTSMS ? 'btn-primary' : 'btn-outline-primary'} w-100 action-btn" 
-                        onclick="toggleTuTTSMS('${item.SOMAY}', ${!isTuTTSMS})" 
-                        ${disableTuTTSMS ? 'disabled' : ''}>
-                  <i class="bi bi-check2-all"></i> Gạch Cước
-                </button>
-              </div>
-
-              <div class="col-6 mt-1">
-                <button class="btn btn-sm btn-outline-secondary w-100 action-btn" onclick="checkIn('${item.SOMAY}')">
-                  <i class="bi bi-geo-fill"></i> Check-in
-                </button>
-              </div>
-
-              <div class="col-12 mt-1">
-                <button class="btn btn-sm btn-outline-warning text-dark w-100 action-btn" onclick="openNoteModal('${item.SOMAY}', '${item.GHICHU1}', '${item.NGAYHEN}')">
-                  <i class="bi bi-pencil"></i> Ghi Chú & Ngày Hẹn
-                </button>
-              </div>
             </div>
 
           </div>
@@ -620,6 +691,51 @@
       taiDanhSachKhach();
     });
   }
+  // 1. Hàm mở Modal và đổ dữ liệu khách hàng vào ô nhập
+function openEditCustomerModal(soMay, tenTT, soDT, sttTuyen, diaChi, hinhThuc) {
+  document.getElementById("editInfoSoMay").value = soMay;
+  document.getElementById("editInfoTenTT").value = tenTT || "";
+  document.getElementById("editInfoSoDT").value = soDT || "";
+  document.getElementById("editInfoSttTuyen").value = sttTuyen || "";
+  document.getElementById("editInfoDiaChi").value = diaChi || "";
+  document.getElementById("editInfoHinhThuc").value = hinhThuc || "Tại Nhà";
+
+  let modalElem = document.getElementById('editCustomerModal');
+  let myModal = bootstrap.Modal.getInstance(modalElem) || new bootstrap.Modal(modalElem);
+  myModal.show();
+}
+
+// 2. Hàm gửi dữ liệu cập nhật về Backend Google Sheet
+// 2. Hàm gửi dữ liệu cập nhật về Backend Google Sheet (ĐÃ SỬA CHUẨN)
+function saveCustomerInfo() {
+  let payload = {
+    action: "updateCustomerInfo",
+    THANG_NO: document.getElementById("selectThang").value,
+    SOMAY: document.getElementById("editInfoSoMay").value,
+    TENTT: document.getElementById("editInfoTenTT").value,
+    SO_DT: document.getElementById("editInfoSoDT").value,
+    STTTUYEN: document.getElementById("editInfoSttTuyen").value,
+    DIACHITT: document.getElementById("editInfoDiaChi").value,
+    HINHTHUCTT: document.getElementById("editInfoHinhThuc").value
+  };
+
+  // Sử dụng callApi để chạy được trên cả Web App lẫn khi nhúng iframe
+  callApi({ action: "xuLyCapNhatTrangThai", data: payload }, function(res) {
+    if (res && res.message) {
+      alert(res.message);
+    } else {
+      alert("Đã cập nhật thông tin thành công!");
+    }
+    
+    // Tắt Modal sau khi lưu thành công
+    let modalElem = document.getElementById('editCustomerModal');
+    let myModal = bootstrap.Modal.getInstance(modalElem);
+    if (myModal) myModal.hide();
+    
+    // Tải lại danh sách khách hàng
+    taiDanhSachKhach();
+  });
+}
 </script>
 </body>
 </html>
