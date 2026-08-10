@@ -122,12 +122,13 @@
       <div class="col-6 col-md-3">
         <label class="form-label fw-bold small">Lọc Trạng Thái</label>
         <select id="selectFilterStatus" class="form-select form-select-sm" onchange="locKhachHang()">
-          <option value="ALL">Tất cả trạng thái</option>
-          <option value="CHUATHU">Chưa thu tiền</option>
-          <option value="DATHU">Đã thu tiền</option>
-          <option value="HEN">Có ngày hẹn trả</option>
-          <option value="CHECKED">Đã Check-in điểm thu</option>
-        </select>
+  <option value="ALL">Tất cả trạng thái</option>
+  <option value="CHUATHU">Chưa Thu</option>
+  <option value="DATHU_CHUAGACH">Đã Thu chưa gạch</option>
+  <option value="DAGACH">Đã Gạch</option>
+  <option value="HEN">Có Ngày Hẹn</option>
+  <option value="CHECKED">Đã Checkin</option>
+</select>
       </div>
 
       <!-- 5. Tìm Kiếm Nhanh -->
@@ -370,12 +371,29 @@
                         item.MAKH.toLowerCase().includes(keyword) ||
                         item.DIACHITT.toLowerCase().includes(keyword);
 
-      // 2. Lọc theo Trạng Thái
-      let matchStatus = true;
-      if (statusFilter === "CHUATHU") matchStatus = !item.DATHU;
-      if (statusFilter === "DATHU") matchStatus = item.DATHU;
-      if (statusFilter === "HEN") matchStatus = item.NGAYHEN !== "";
-      if (statusFilter === "CHECKED") matchStatus = (item.CHECK1 || item.CHECK2 || item.CHECK3);
+      // 2. Lọc theo Trạng Thái (Logic mới)
+    let matchStatus = true;
+    
+    if (statusFilter === "CHUATHU") {
+      // Chưa Thu: Cả DATHU, TUTT và TUTTSMS đều FALSE
+      matchStatus = !item.DATHU && !item.TUTT && !item.TUTTSMS;
+    } 
+    else if (statusFilter === "DATHU_CHUAGACH") {
+      // Đã Thu chưa gạch: Chỉ có DATHU = true (TUTT & TUTTSMS đều false)
+      matchStatus = item.DATHU && !item.TUTT && !item.TUTTSMS;
+    } 
+    else if (statusFilter === "DAGACH") {
+      // Đã Gạch: TUTT = true HOẶC TUTTSMS = true
+      matchStatus = item.TUTT || item.TUTTSMS;
+    } 
+    else if (statusFilter === "HEN") {
+      // Có Ngày Hẹn
+      matchStatus = item.NGAYHEN && item.NGAYHEN.trim() !== "";
+    } 
+    else if (statusFilter === "CHECKED") {
+      // Đã Checkin
+      matchStatus = !!(item.CHECK1 || item.CHECK2 || item.CHECK3 || item.CHECK4 || item.CHECK5);
+    }
 
       // 3. Lọc theo Hình Thức Thanh Toán
       let matchHinhThuc = true;
