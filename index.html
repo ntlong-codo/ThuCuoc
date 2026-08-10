@@ -15,17 +15,48 @@
     .money-badge { font-size: 1.15rem; font-weight: 800; color: #d32f2f; }
     .stat-card { border: none; border-radius: 10px; padding: 12px; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
     .action-btn { border-radius: 8px; font-weight: 600; }
+    
+    /* Màn hình đăng nhập overlay */
+    #loginOverlay {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background-color: rgba(15, 23, 42, 0.95);
+      z-index: 9999; display: flex; align-items: center; justify-content: center;
+    }
   </style>
 </head>
 <body>
+
+<!-- MÀN HÌNH ĐĂNG NHẬP MẬT KHẨU -->
+<div id="loginOverlay">
+  <div class="card p-4 shadow-lg border-0" style="max-width: 380px; width: 90%; border-radius: 16px;">
+    <div class="text-center mb-3">
+      <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-2" style="width: 60px; height: 60px;">
+        <i class="bi bi-shield-lock-fill fs-2"></i>
+      </div>
+      <h5 class="fw-bold mb-1">XÁC NHẬN TRUY CẬP</h5>
+      <p class="text-muted small">Vui lòng nhập mật khẩu để tiếp tục</p>
+    </div>
+    <form onsubmit="xuLyDangNhap(event)">
+      <div class="mb-3">
+        <input type="password" id="inputPass" class="form-control text-center fs-5" placeholder="Mật khẩu..." required autofocus>
+      </div>
+      <button type="submit" class="btn btn-primary w-100 fw-bold py-2">ĐĂNG NHẬP</button>
+    </form>
+  </div>
+</div>
 
 <!-- NAVBAR THANH TIÊU ĐỀ -->
 <nav class="navbar navbar-dark bg-primary mb-3 shadow-sm">
   <div class="container-fluid">
     <span class="navbar-brand mb-0 h1 fw-bold"><i class="bi bi-wallet2 me-2"></i> QUẢN LÝ THU CƯỚC</span>
-    <button class="btn btn-light btn-sm fw-bold" data-bs-toggle="modal" data-bs-target="#configModal">
-      <i class="bi bi-gear-fill me-1"></i> Cấu hình API
-    </button>
+    <div>
+      <button class="btn btn-light btn-sm fw-bold me-1" data-bs-toggle="modal" data-bs-target="#configModal">
+        <i class="bi bi-gear-fill me-1"></i> API
+      </button>
+      <button class="btn btn-outline-light btn-sm fw-bold" onclick="dangXuat()">
+        <i class="bi bi-box-arrow-right me-1"></i> Đăng xuất
+      </button>
+    </div>
   </div>
 </nav>
 
@@ -59,19 +90,35 @@
     </div>
   </div>
 
-  <!-- BỘ LỌC DỮ LIỆU -->
+  <!-- BỘ LỌC DỮ LIỆU --><!-- BỘ LỌC DỮ LIỆU -->
   <div class="card p-3 mb-3 shadow-sm border-0">
     <div class="row g-2">
-      <div class="col-6 col-md-3">
+      <!-- 1. Kỳ Cước -->
+      <div class="col-6 col-md-2">
         <label class="form-label fw-bold small">Kỳ Cước (Tháng)</label>
         <select id="selectThang" class="form-select form-select-sm" onchange="taiDanhSachKhach()"></select>
       </div>
-      <div class="col-6 col-md-3">
+
+      <!-- 2. Tuyến Thu -->
+      <div class="col-6 col-md-2">
         <label class="form-label fw-bold small">Tuyến Thu</label>
         <select id="selectTuyen" class="form-select form-select-sm" onchange="taiDanhSachKhach()">
           <option value="ALL">-- Tất cả tuyến --</option>
         </select>
       </div>
+
+      <!-- 3. BỔ SUNG: Hình Thức Thanh Toán (Nằm ngay sau Tuyến Thu) -->
+      <div class="col-6 col-md-2">
+        <label class="form-label fw-bold small">Hình Thức TT</label>
+        <select id="selectHinhThuc" class="form-select form-select-sm" onchange="locKhachHang()">
+          <option value="ALL">Tất cả hình thức</option>
+          <option value="Tại Nhà">Tại Nhà</option>
+          <option value="Zalo">Zalo</option>
+          <option value="Tự Đóng">Tự Đóng</option>
+        </select>
+      </div>
+
+      <!-- 4. Lọc Trạng Thái -->
       <div class="col-6 col-md-3">
         <label class="form-label fw-bold small">Lọc Trạng Thái</label>
         <select id="selectFilterStatus" class="form-select form-select-sm" onchange="locKhachHang()">
@@ -82,7 +129,9 @@
           <option value="CHECKED">Đã Check-in điểm thu</option>
         </select>
       </div>
-      <div class="col-6 col-md-3">
+
+      <!-- 5. Tìm Kiếm Nhanh -->
+      <div class="col-12 col-md-3">
         <label class="form-label fw-bold small">Tìm Kiếm Nhanh</label>
         <input type="text" id="searchBox" class="form-control form-control-sm" placeholder="Tên, Số máy, SĐT..." onkeyup="locKhachHang()">
       </div>
@@ -185,17 +234,56 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+  const PASS_APP = "124985"; // MẬT KHẨU TRUY CẬP TRANG
+  const SESSION_HOURS = 6;   // THỜI GIAN LƯU PHIÊN (6 TIẾNG)
+
   let API_URL = localStorage.getItem("THUCUOC_API_URL") || "";
   let fullData = [];
 
   window.onload = function() {
     document.getElementById("apiUrlInput").value = API_URL;
+    kiemTraDangNhap();
+  };
+
+  // QUẢN LÝ ĐĂNG NHẬP
+  function kiemTraDangNhap() {
+    let lastLogin = localStorage.getItem("THUCUOC_LOGIN_TIME");
+    let now = new Date().getTime();
+    let sixHoursMs = SESSION_HOURS * 60 * 60 * 1000;
+
+    if (lastLogin && (now - parseInt(lastLogin)) < sixHoursMs) {
+      document.getElementById("loginOverlay").style.display = "none";
+      batDauUngDung();
+    } else {
+      document.getElementById("loginOverlay").style.display = "flex";
+    }
+  }
+
+  function xuLyDangNhap(e) {
+    e.preventDefault();
+    let pass = document.getElementById("inputPass").value;
+    if (pass === PASS_APP) {
+      localStorage.setItem("THUCUOC_LOGIN_TIME", new Date().getTime().toString());
+      document.getElementById("loginOverlay").style.display = "none";
+      document.getElementById("inputPass").value = "";
+      batDauUngDung();
+    } else {
+      alert("Sai mật khẩu! Vui lòng thử lại.");
+    }
+  }
+
+  function dangXuat() {
+    localStorage.removeItem("THUCUOC_LOGIN_TIME");
+    document.getElementById("loginOverlay").style.display = "flex";
+  }
+
+  function batDauUngDung() {
     if (!API_URL && typeof google === "undefined") {
       new bootstrap.Modal(document.getElementById('configModal')).show();
     } else {
       khoiTao();
     }
-  };
+  }
 
   function saveApiUrl() {
     let url = document.getElementById("apiUrlInput").value.trim();
@@ -206,10 +294,9 @@
     khoiTao();
   }
 
-  // HÀM GỌI DỮ LIỆU UNIVERSAL (CHẠY ĐƯỢC CẢ FETCH KHÁC MIỀN VÀ GOOGLE SCRIPT RUN)
+  // HÀM GỌI DỮ LIỆU UNIVERSAL
   function callApi(payload, callback) {
     if (typeof google !== "undefined" && google.script && google.script.run) {
-      // Chạy trực tiếp bên trong Apps Script
       if (payload.action === "getInitialData") {
         google.script.run.withSuccessHandler(callback).getInitialData();
       } else if (payload.action === "layDuLieuTuyen") {
@@ -220,7 +307,6 @@
         google.script.run.withSuccessHandler(callback).xuLyCapNhatTrangThai(payload);
       }
     } else {
-      // Chạy qua fetch() API ngoài
       if (!API_URL) { alert("Chưa cấu hình API URL!"); return; }
       fetch(API_URL, {
         method: "POST",
@@ -271,27 +357,36 @@
     locKhachHang();
   }
 
-  function locKhachHang() {
+ function locKhachHang() {
     let keyword = document.getElementById("searchBox").value.toLowerCase();
     let statusFilter = document.getElementById("selectFilterStatus").value;
+    let hinhThucFilter = document.getElementById("selectHinhThuc").value; // Lấy giá trị bộ lọc Hình thức TT
 
     let filtered = fullData.filter(item => {
+      // 1. Tìm kiếm theo từ khóa
       let matchText = item.TENTT.toLowerCase().includes(keyword) ||
                         item.SOMAY.toLowerCase().includes(keyword) ||
                         item.SO_DT.toLowerCase().includes(keyword) ||
                         item.MAKH.toLowerCase().includes(keyword) ||
                         item.DIACHITT.toLowerCase().includes(keyword);
 
+      // 2. Lọc theo Trạng Thái
       let matchStatus = true;
       if (statusFilter === "CHUATHU") matchStatus = !item.DATHU;
       if (statusFilter === "DATHU") matchStatus = item.DATHU;
       if (statusFilter === "HEN") matchStatus = item.NGAYHEN !== "";
       if (statusFilter === "CHECKED") matchStatus = (item.CHECK1 || item.CHECK2 || item.CHECK3);
 
-      return matchText && matchStatus;
+      // 3. Lọc theo Hình Thức Thanh Toán
+      let matchHinhThuc = true;
+      if (hinhThucFilter !== "ALL") {
+        matchHinhThuc = (item.HINHTHUCTT || "").toLowerCase().includes(hinhThucFilter.toLowerCase());
+      }
+
+      return matchText && matchStatus && matchHinhThuc;
     });
 
-    // Tính toán số liệu
+    // Tính toán số liệu thống kê
     let tongCuoc = 0, daThu = 0, conNo = 0;
     filtered.forEach(i => {
       tongCuoc += i.CUOC;
@@ -308,17 +403,26 @@
     let html = "";
     filtered.forEach(item => {
       let isDaThu = item.DATHU;
-      let isTuTT = item.TUTT || item.TUTTSMS;
+      let isTuTT = item.TUTT;
+      let isTuTTSMS = item.TUTTSMS;
+
+      // RÀNG BUỘC KHOÁ / DISABLE NÚT
+      let disableThuTien = isTuTTSMS || isTuTT;
+      let disableTuTT = isDaThu; // Nếu ĐÃ THU thì không bấm "Đã đóng Tiền"
+      let disableTuTTSMS = !isDaThu || isTuTT; // Chưa "Thu Tiền" (!isDaThu) HOẶC đã bấm "Đã đóng Tiền" thì KHÔNG bấm "Gạch Cước"
+
       let checkLog = [item.CHECK1, item.CHECK2, item.CHECK3, item.CHECK4, item.CHECK5].filter(c => c).join(" | ");
 
       html += `
         <div class="col-12 col-md-6 col-lg-4">
-          <div class="card card-customer p-3 ${isDaThu ? 'dathu' : ''} ${isTuTT ? 'tutt' : ''}">
+          <div class="card card-customer p-3 ${isDaThu ? 'dathu' : ''} ${(isTuTT || isTuTTSMS) ? 'tutt' : ''}">
             <div class="d-flex justify-content-between align-items-center mb-1">
               <div>
                 <span class="stt-badge me-1">${item.STTTUYEN}</span>
                 <span class="badge bg-secondary">${item.TUYEN}</span>
-                ${isTuTT ? '<span class="badge bg-primary">Đã Gạch</span>' : ''}
+                <span class="badge bg-info text-dark">${item.HINHTHUCTT || 'Thu tại nhà'}</span>
+                ${isTuTT ? '<span class="badge bg-success">Đã Đóng</span>' : ''}
+                ${isTuTTSMS ? '<span class="badge bg-primary">Đã Gạch SMS</span>' : ''}
               </div>
               <span class="money-badge">${item.CUOC.toLocaleString('vi-VN')} đ</span>
             </div>
@@ -331,33 +435,47 @@
             ${item.GHICHU1 ? `<div class="small text-dark fst-italic bg-light p-1 rounded my-1" style="color: blue;"><i class="bi bi-chat-left-text me-1"></i> ${item.GHICHU1}</div>` : ''}
             ${checkLog ? `<div class="small text-success my-1" style="font-size:0.75rem;"><i class="bi bi-clock-history me-1"></i> ${checkLog}</div>` : ''}
 
-            <!-- NÚT LIÊN HỆ ĐIỆN THOẠI & MAPS -->
+            <!-- NÚT LIÊN HỆ ĐIỆN THOẠI & ZALO -->
             <div class="d-flex gap-1 my-2">
               <a href="tel:${item.SO_DT}" class="btn btn-sm btn-outline-secondary flex-fill"><i class="bi bi-telephone-fill"></i> Gọi</a>
               <a href="https://zalo.me/${item.SO_DT}" target="_blank" class="btn btn-sm btn-outline-info flex-fill"><i class="bi bi-chat-dots-fill"></i> Zalo</a>
-              <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.DIACHITT)}" target="_blank" class="btn btn-sm btn-outline-danger flex-fill"><i class="bi bi-map-fill"></i> Map</a>
             </div>
 
             <!-- NÚT THAO TÁC TÁC NGHIỆP -->
             <div class="row g-1 mt-1 pt-2 border-top">
               <div class="col-6">
-                <button class="btn btn-sm ${isDaThu ? 'btn-success' : 'btn-outline-success'} w-100 action-btn" onclick="toggleThuTien('${item.SOMAY}', ${!isDaThu})">
+                <button class="btn btn-sm ${isDaThu ? 'btn-success' : 'btn-outline-success'} w-100 action-btn" 
+                        onclick="toggleThuTien('${item.SOMAY}', ${!isDaThu})" 
+                        ${disableThuTien ? 'disabled' : ''}>
                   <i class="bi ${isDaThu ? 'bi-check-circle-fill' : 'bi-circle'}"></i> ${isDaThu ? 'ĐÃ THU' : 'THU TIỀN'}
                 </button>
               </div>
+
               <div class="col-6">
-                <button class="btn btn-sm btn-outline-primary w-100 action-btn" onclick="checkIn('${item.SOMAY}')">
+                <button class="btn btn-sm ${isTuTT ? 'btn-success' : 'btn-outline-success'} w-100 action-btn" 
+                        onclick="toggleTuTT('${item.SOMAY}', ${!isTuTT})" 
+                        ${disableTuTT ? 'disabled' : ''}>
+                  <i class="bi ${isTuTT ? 'bi-check-square-fill' : 'bi-square'}"></i> Đã đóng Tiền
+                </button>
+              </div>
+
+              <div class="col-6 mt-1">
+                <button class="btn btn-sm ${isTuTTSMS ? 'btn-primary' : 'btn-outline-primary'} w-100 action-btn" 
+                        onclick="toggleTuTTSMS('${item.SOMAY}', ${!isTuTTSMS})" 
+                        ${disableTuTTSMS ? 'disabled' : ''}>
+                  <i class="bi bi-check2-all"></i> Gạch Cước
+                </button>
+              </div>
+
+              <div class="col-6 mt-1">
+                <button class="btn btn-sm btn-outline-secondary w-100 action-btn" onclick="checkIn('${item.SOMAY}')">
                   <i class="bi bi-geo-fill"></i> Check-in
                 </button>
               </div>
-              <div class="col-6 mt-1">
+
+              <div class="col-12 mt-1">
                 <button class="btn btn-sm btn-outline-warning text-dark w-100 action-btn" onclick="openNoteModal('${item.SOMAY}', '${item.GHICHU1}', '${item.NGAYHEN}')">
-                  <i class="bi bi-pencil"></i> Ghi Chú
-                </button>
-              </div>
-              <div class="col-6 mt-1">
-                <button class="btn btn-sm ${isTuTT ? 'btn-primary' : 'btn-outline-secondary'} w-100 action-btn" onclick="toggleTuTT('${item.SOMAY}', ${!isTuTT})">
-                  <i class="bi bi-check2-all"></i> Gạch Cước
+                  <i class="bi bi-pencil"></i> Ghi Chú & Ngày Hẹn
                 </button>
               </div>
             </div>
@@ -378,10 +496,18 @@
     });
   }
 
-  // THAO TÁC GẠCH CƯỚC / TUTT
+  // THAO TÁC ĐÃ ĐÓNG TIỀN (TUTT)
   function toggleTuTT(somay, status) {
     let thang = document.getElementById("selectThang").value;
-    callApi({ action: "xuLyCapNhatTrangThai", data: { action: "toggleTuTT", THANG_NO: thang, SOMAY: somay, TUTT: status, TUTTSMS: status } }, function() {
+    callApi({ action: "xuLyCapNhatTrangThai", data: { action: "toggleTuTT", THANG_NO: thang, SOMAY: somay, TUTT: status } }, function() {
+      taiDanhSachKhach();
+    });
+  }
+
+  // THAO TÁC GẠCH CƯỚC SMS (TUTTSMS)
+  function toggleTuTTSMS(somay, status) {
+    let thang = document.getElementById("selectThang").value;
+    callApi({ action: "xuLyCapNhatTrangThai", data: { action: "toggleTuTTSMS", THANG_NO: thang, SOMAY: somay, TUTTSMS: status } }, function() {
       taiDanhSachKhach();
     });
   }
