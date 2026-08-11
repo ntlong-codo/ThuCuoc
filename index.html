@@ -498,14 +498,26 @@
                 <span class="money-badge">${item.CUOC.toLocaleString('vi-VN')} đ</span>
               </div>
 
+
+              <!-- TÊN KHÁCH HÀNG: Copy toàn bộ thông tin -->
               <h6 class="fw-bold text-dark mb-1 d-flex justify-content-between align-items-center">
-                <span onclick="copyThongTin(event, '${item.TENTT}', '${item.MAKH}', '${item.SOMAY}', '${item.DIACHITT}')" class="text-primary" style="cursor: pointer; position: relative; z-index: 2;" title="Bấm để copy thông tin khách">
+                <span onclick="copyThongTin(event, '${item.TENTT}', '${item.MAKH}', '${item.SOMAY}', '${item.DIACHITT}')" class="text-primary" style="cursor: pointer; position: relative; z-index: 2;" title="Bấm để copy toàn bộ thông tin khách">
                   ${item.TENTT} <i class="bi bi-copy ms-1 text-muted" style="font-size: 0.85rem;"></i>
                 </span>
                 <i class="bi bi-chevron-down text-muted small"></i> 
               </h6>
 
-              <div class="small text-muted mb-1"><i class="bi bi-phone"></i> ${item.SOMAY} | Mã: ${item.MAKH}</div>
+              <!-- SỐ MÁY & MÃ KH: Bấm vào phần nào copy riêng phần đó -->
+              <div class="small text-muted mb-1">
+                <i class="bi bi-phone me-1"></i>
+                <span onclick="copySingleText(event, '${item.SOMAY}', 'Số máy')" class="text-primary" style="cursor: pointer; position: relative; z-index: 2;" title="Bấm để copy Số máy">
+                  ${item.SOMAY} <i class="bi bi-copy text-muted" style="font-size: 0.75rem;"></i>
+                </span>
+                <span class="mx-1">|</span> Mã: 
+                <span onclick="copySingleText(event, '${item.MAKH}', 'Mã KH')" class="text-primary" style="cursor: pointer; position: relative; z-index: 2;" title="Bấm để copy Mã KH">
+                  ${item.MAKH} <i class="bi bi-copy text-muted" style="font-size: 0.75rem;"></i>
+                </span>
+              </div>
               <div class="small text-muted mb-1"><i class="bi bi-geo-alt"></i> ${item.DIACHITT}</div>
 
               ${item.NGAYHEN ? `<div class="small text-danger fw-bold"><i class="bi bi-calendar-event me-1"></i> Hẹn: Ngày ${item.NGAYHEN} (Dự kiến: ${item.NGAYHEN}/${selectedThang})</div>` : ''}
@@ -736,7 +748,17 @@
       alert("Lỗi copy: " + err);
     });
   }
-
+// Copy riêng lẻ từng đoạn văn bản (Số máy hoặc Mã KH)
+  function copySingleText(event, text, label) {
+    event.stopPropagation(); // Tránh kích hoạt sự kiện đóng/mở card
+    if (!text) return;
+    
+    navigator.clipboard.writeText(text).then(function() {
+      hienThiThongBao("✅ Đã copy " + label + ": " + text);
+    }).catch(function(err) {
+      alert("Lỗi copy: " + err);
+    });
+  }
   function hienThiThongBao(msg) {
     let toast = document.getElementById("toastMsg");
     if (!toast) {
