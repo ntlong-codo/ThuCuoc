@@ -19,11 +19,35 @@
     .stat-card { border: none; border-radius: 10px; padding: 12px; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
     .action-btn { border-radius: 8px; font-weight: 600; }
     
+    /* Chữ Nợ Cước màu tím trước giá tiền */
+    .text-nocuoc { color: #800080; font-weight: 800; margin-right: 4px; display: inline-block; }
+    
+    /* Box Checkbox Nợ Cước trong Modal */
+    .nocuoc-box {
+      background-color: #f3e5f5;
+      border: 1px solid #ce93d8;
+      border-radius: 8px;
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+    }
+
     /* Màn hình đăng nhập overlay */
     #loginOverlay {
       position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
       background-color: rgba(15, 23, 42, 0.95);
       z-index: 9999; display: flex; align-items: center; justify-content: center;
+    }
+
+    /* CSS dành cho việc in ấn Hóa Đơn */
+    @media print {
+      body * { visibility: hidden; }
+      #fullScreenBill, #fullScreenBill * { visibility: visible; }
+      #fullScreenBill {
+        position: absolute; left: 0; top: 0; width: 100%; height: auto;
+        background-color: #fff !important; padding: 0 !important;
+      }
+      .no-print { display: none !important; }
     }
   </style>
 </head>
@@ -187,14 +211,7 @@
         <input type="hidden" id="editSomay">
         <div class="mb-3">
           <label class="form-label fw-bold">Ngày hẹn trả cước hàng tháng</label>
-          <select id="editNgayHen" class="form-select">
-            <option value="">-- Không hẹn --</option>
-            <script>
-              for (let i = 1; i <= 31; i++) {
-                document.write(`<option value="${i}">Mùng ${i} hàng tháng (Ngày ${i})</option>`);
-              }
-            </script>
-          </select>
+          <select id="editNgayHen" class="form-select"></select>
         </div>
         <div class="mb-3">
           <label class="form-label fw-bold">Ghi Chú Thu Cước</label>
@@ -209,7 +226,7 @@
   </div>
 </div>
 
-<!-- MODAL SỬA THÔNG TIN KHÁCH HÀNG -->
+<!-- MODAL SỬA THÔNG TIN KHÁCH HÀNG (CÓ THÊM TUYẾN, SỬA GIÁ TIỀN, CHECKBOX NOCUOC) -->
 <div class="modal fade" id="editCustomerModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
@@ -220,35 +237,64 @@
       <div class="modal-body">
         <input type="hidden" id="editInfoSoMay">
         
+        <!-- 1. Tên Khách Hàng -->
         <div class="mb-2">
-          <label class="form-label fw-bold small">Tên Khách Hàng</label>
-          <input type="text" id="editInfoTenTT" class="form-control form-control-sm">
+          <label class="form-label fw-bold small mb-1">Tên Khách Hàng</label>
+          <input type="text" id="editInfoTenTT" class="form-control form-control-sm" placeholder="Nhập tên khách hàng">
         </div>
 
+        <!-- 2. Tuyến & STT Tuyến -->
         <div class="row g-2 mb-2">
           <div class="col-6">
-            <label class="form-label fw-bold small">Số Điện Thoại</label>
-            <input type="text" id="editInfoSoDT" class="form-control form-control-sm">
+            <label class="form-label fw-bold small mb-1">Tuyến</label>
+            <input type="text" id="editInfoTuyen" class="form-control form-control-sm" placeholder="Mã/Tên tuyến">
           </div>
           <div class="col-6">
-            <label class="form-label fw-bold small">Thứ Tự Tuyến (STT)</label>
-            <input type="number" id="editInfoSttTuyen" class="form-control form-control-sm">
+            <label class="form-label fw-bold small mb-1">Thứ Tự Tuyến (STT)</label>
+            <input type="number" id="editInfoSttTuyen" class="form-control form-control-sm" placeholder="Số thứ tự">
           </div>
         </div>
 
-        <div class="mb-2">
-          <label class="form-label fw-bold small">Địa Chỉ</label>
-          <input type="text" id="editInfoDiaChi" class="form-control form-control-sm">
+        <!-- 3. Số Điện Thoại & Giá Tiền Cước -->
+        <div class="row g-2 mb-2">
+          <div class="col-6">
+            <label class="form-label fw-bold small mb-1">Số Điện Thoại</label>
+            <input type="text" id="editInfoSoDT" class="form-control form-control-sm" placeholder="SĐT liên hệ">
+          </div>
+          <div class="col-6">
+            <label class="form-label fw-bold small mb-1">Số Tiền Cước (VNĐ)</label>
+            <input type="number" id="editInfoCuoc" class="form-control form-control-sm" placeholder="Nhập số tiền cước">
+          </div>
         </div>
 
+        <!-- 4. Địa Chỉ Thanh Toán -->
         <div class="mb-2">
-          <label class="form-label fw-bold small">Hình Thức Thanh Toán</label>
-          <select id="editInfoHinhThuc" class="form-select form-select-sm">
-            <option value="Tại Nhà">Tại Nhà</option>
-            <option value="Zalo">Zalo</option>
-            <option value="Tự Đóng">Tự Đóng</option>
-          </select>
+          <label class="form-label fw-bold small mb-1">Địa Chỉ Thanh Toán</label>
+          <input type="text" id="editInfoDiaChi" class="form-control form-control-sm" placeholder="Nhập địa chỉ">
         </div>
+
+        <!-- 5. Hình Thức Thanh Toán & Checkbox Nợ Cước -->
+        <div class="row g-2 mb-2 align-items-end">
+          <div class="col-6">
+            <label class="form-label fw-bold small mb-1">Hình Thức Thanh Toán</label>
+            <select id="editInfoHinhThuc" class="form-select form-select-sm">
+              <option value="Tại Nhà">Tại Nhà</option>
+              <option value="Zalo">Zalo</option>
+              <option value="Tự Đóng">Tự Đóng</option>
+            </select>
+          </div>
+          <div class="col-6">
+            <div class="nocuoc-box">
+              <div class="form-check m-0">
+                <input class="form-check-input" type="checkbox" id="editInfoNoCuoc" style="cursor: pointer;">
+                <label class="form-check-label fw-bold" for="editInfoNoCuoc" style="color: #800080; cursor: pointer; font-size: 0.9rem;">
+                  Nợ Cước (NOCUOC)
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Hủy</button>
@@ -302,8 +348,19 @@
 
   window.onload = function() {
     document.getElementById("apiUrlInput").value = API_URL;
+    khoiTaoNgayHenOptions();
     kiemTraDangNhap();
   };
+
+  function khoiTaoNgayHenOptions() {
+    let select = document.getElementById("editNgayHen");
+    if (!select) return;
+    let html = `<option value="">-- Không hẹn --</option>`;
+    for (let i = 1; i <= 31; i++) {
+      html += `<option value="${i}">Mùng ${i} hàng tháng (Ngày ${i})</option>`;
+    }
+    select.innerHTML = html;
+  }
 
   function kiemTraDangNhap() {
     let lastLogin = localStorage.getItem("THUCUOC_LOGIN_TIME");
@@ -428,7 +485,7 @@
                         item.MAKH.toLowerCase().includes(keyword) ||
                         item.DIACHITT.toLowerCase().includes(keyword);
 
-      // Cả TUTTSMS và GACHTAY đều là Đã Gạch (1 trong 2 được chọn)
+      // Cả TUTTSMS và GACHTAY đều là Đã Gạch
       let isDaGach = item.TUTTSMS || item.GACHTAY;
 
       let matchStatus = true;
@@ -473,12 +530,15 @@
       let isTuTTSMS = item.TUTTSMS;
       let isGachTay = item.GACHTAY;
 
-      // NẾU CÓ CHỮ "ĐÃ GẠCH SMS" (TUTTSMS = true) THÌ DISABLE 3 NÚT: Thu Tiền, Đã đóng tiền, Gạch Cước
+      // NẾU CÓ "ĐÃ GẠCH SMS" THÌ DISABLE 3 NÚT: Thu Tiền, Đã đóng tiền, Gạch Cước
       let disableThuTien = isTuTTSMS || isTuTT || isGachTay;
       let disableTuTT = isTuTTSMS || isDaThu;
       let disableGachTay = isTuTTSMS || !isDaThu || isTuTT;
 
       let checkLog = [item.CHECK1, item.CHECK2, item.CHECK3, item.CHECK4, item.CHECK5].filter(c => c).join(" | ");
+
+      // HIỂN THỊ CHỮ "NỢ CƯỚC" MÀU TÍM TRƯỚC SỐ TIỀN KHI NOCUOC = TRUE
+      let tagNoCuoc = item.NOCUOC ? '<span class="text-nocuoc">Nợ Cước</span>' : '';
 
       html += `
         <div class="col-12 col-md-6 col-lg-4">
@@ -495,13 +555,12 @@
                   ${isTuTTSMS ? '<span class="badge bg-primary">Đã Gạch SMS</span>' : ''}
                   ${isGachTay ? '<span class="badge bg-primary">Đã Gạch</span>' : ''}
                 </div>
-                <span class="money-badge">${item.CUOC.toLocaleString('vi-VN')} đ</span>
+                <span class="money-badge">${tagNoCuoc}${item.CUOC.toLocaleString('vi-VN')} đ</span>
               </div>
-
 
               <!-- TÊN KHÁCH HÀNG: Copy toàn bộ thông tin -->
               <h6 class="fw-bold text-dark mb-1 d-flex justify-content-between align-items-center">
-                <span onclick="copyThongTin(event, '${item.TENTT}', '${item.MAKH}', '${item.SOMAY}', '${item.DIACHITT}')" class="text-primary" style="cursor: pointer; position: relative; z-index: 2;" title="Bấm để copy toàn bộ thông tin khách">
+                <span onclick="copyThongTin(event, '${escapeHtml(item.TENTT)}', '${escapeHtml(item.MAKH)}', '${escapeHtml(item.SOMAY)}', '${escapeHtml(item.DIACHITT)}')" class="text-primary" style="cursor: pointer; position: relative; z-index: 2;" title="Bấm để copy toàn bộ thông tin khách">
                   ${item.TENTT} <i class="bi bi-copy ms-1 text-muted" style="font-size: 0.85rem;"></i>
                 </span>
                 <i class="bi bi-chevron-down text-muted small"></i> 
@@ -510,11 +569,11 @@
               <!-- SỐ MÁY & MÃ KH: Bấm vào phần nào copy riêng phần đó -->
               <div class="small text-muted mb-1">
                 <i class="bi bi-phone me-1"></i>
-                <span onclick="copySingleText(event, '${item.SOMAY}', 'Số máy')" class="text-primary" style="cursor: pointer; position: relative; z-index: 2;" title="Bấm để copy Số máy">
+                <span onclick="copySingleText(event, '${escapeHtml(item.SOMAY)}', 'Số máy')" class="text-primary" style="cursor: pointer; position: relative; z-index: 2;" title="Bấm để copy Số máy">
                   ${item.SOMAY} <i class="bi bi-copy text-muted" style="font-size: 0.75rem;"></i>
                 </span>
                 <span class="mx-1">|</span> Mã: 
-                <span onclick="copySingleText(event, '${item.MAKH}', 'Mã KH')" class="text-primary" style="cursor: pointer; position: relative; z-index: 2;" title="Bấm để copy Mã KH">
+                <span onclick="copySingleText(event, '${escapeHtml(item.MAKH)}', 'Mã KH')" class="text-primary" style="cursor: pointer; relative; z-index: 2;" title="Bấm để copy Mã KH">
                   ${item.MAKH} <i class="bi bi-copy text-muted" style="font-size: 0.75rem;"></i>
                 </span>
               </div>
@@ -569,7 +628,7 @@
                 <!-- NÚT GHI CHÚ & NGÀY HẸN -->
                 <div class="col-6 mt-1">
                   <button class="btn btn-sm btn-outline-warning text-dark w-100 action-btn" 
-                          onclick="openNoteModal('${item.SOMAY}', '${item.GHICHU1}', '${item.NGAYHEN}')">
+                          onclick="openNoteModal('${item.SOMAY}', '${escapeHtml(item.GHICHU1)}', '${item.NGAYHEN}')">
                     <i class="bi bi-pencil"></i> Ghi Chú
                   </button>
                 </div>
@@ -577,14 +636,14 @@
                 <!-- NÚT SỬA THÔNG TIN KHÁCH HÀNG -->
                 <div class="col-6 mt-1">
                   <button class="btn btn-sm btn-outline-info text-dark w-100 action-btn" 
-                          onclick="openEditCustomerModal('${item.SOMAY}', '${item.TENTT}', '${item.SO_DT}', '${item.STTTUYEN}', '${item.DIACHITT}', '${item.HINHTHUCTT || ''}')">
+                          onclick="openEditCustomerModal('${item.SOMAY}', '${escapeHtml(item.TENTT)}', '${item.SO_DT}', '${escapeHtml(item.TUYEN)}', '${item.STTTUYEN}', '${escapeHtml(item.DIACHITT)}', '${escapeHtml(item.HINHTHUCTT || '')}', ${item.CUOC}, ${item.NOCUOC})">
                     <i class="bi bi-person-gear"></i> Sửa Thông Tin
                   </button>
                 </div>
 
                 <div class="col-12 mt-1">
                   <button class="btn btn-sm btn-outline-dark w-100 action-btn fw-bold" 
-                          onclick="moBillFullScreen('${item.SOMAY}', '${item.TENTT}', '${item.MAKH}', '${item.SO_DT}', '${item.DIACHITT}', ${item.CUOC})">
+                          onclick="moBillFullScreen('${item.SOMAY}', '${escapeHtml(item.TENTT)}', '${item.MAKH}', '${item.SO_DT}', '${escapeHtml(item.DIACHITT)}', ${item.CUOC})">
                     <i class="bi bi-printer"></i> Xem & In Hóa Đơn
                   </button>
                 </div>
@@ -598,6 +657,11 @@
     });
 
     document.getElementById("customerList").innerHTML = html || `<div class="text-center py-5 text-muted">Không tìm thấy khách hàng nào</div>`;
+  }
+
+  function escapeHtml(str) {
+    if (!str) return "";
+    return String(str).replace(/'/g, "\\'").replace(/"/g, "&quot;");
   }
 
   // THAO TÁC THU TIỀN
@@ -701,19 +765,24 @@
     });
   }
 
-  function openEditCustomerModal(soMay, tenTT, soDT, sttTuyen, diaChi, hinhThuc) {
+  // MỞ MODAL SỬA THÔNG TIN KHÁCH HÀNG
+  function openEditCustomerModal(soMay, tenTT, soDT, tuyen, sttTuyen, diaChi, hinhThuc, cuoc, noCuoc) {
     document.getElementById("editInfoSoMay").value = soMay;
     document.getElementById("editInfoTenTT").value = tenTT || "";
     document.getElementById("editInfoSoDT").value = soDT || "";
+    document.getElementById("editInfoTuyen").value = tuyen || "";
     document.getElementById("editInfoSttTuyen").value = sttTuyen || "";
+    document.getElementById("editInfoCuoc").value = cuoc || 0;
     document.getElementById("editInfoDiaChi").value = diaChi || "";
     document.getElementById("editInfoHinhThuc").value = hinhThuc || "Tại Nhà";
+    document.getElementById("editInfoNoCuoc").checked = Boolean(noCuoc);
 
     let modalElem = document.getElementById('editCustomerModal');
     let myModal = bootstrap.Modal.getInstance(modalElem) || new bootstrap.Modal(modalElem);
     myModal.show();
   }
 
+  // LƯU THÔNG TIN KHÁCH HÀNG ĐÃ SỬA
   function saveCustomerInfo() {
     let payload = {
       action: "updateCustomerInfo",
@@ -721,9 +790,12 @@
       SOMAY: document.getElementById("editInfoSoMay").value,
       TENTT: document.getElementById("editInfoTenTT").value,
       SO_DT: document.getElementById("editInfoSoDT").value,
+      TUYEN: document.getElementById("editInfoTuyen").value,
       STTTUYEN: document.getElementById("editInfoSttTuyen").value,
+      CUOC: document.getElementById("editInfoCuoc").value,
       DIACHITT: document.getElementById("editInfoDiaChi").value,
-      HINHTHUCTT: document.getElementById("editInfoHinhThuc").value
+      HINHTHUCTT: document.getElementById("editInfoHinhThuc").value,
+      NOCUOC: document.getElementById("editInfoNoCuoc").checked
     };
 
     callApi({ action: "xuLyCapNhatTrangThai", data: payload }, function(res) {
@@ -738,27 +810,46 @@
     });
   }
 
+  function thựcThịCopy(text, thanhCongMsg) {
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(() => {
+        hienThiThongBao(thanhCongMsg);
+      }).catch(err => {
+        fallbackCopyText(text, thanhCongMsg);
+      });
+    } else {
+      fallbackCopyText(text, thanhCongMsg);
+    }
+  }
+
+  function fallbackCopyText(text, thanhCongMsg) {
+    let textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.style.position = "fixed";
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    try {
+      document.execCommand('copy');
+      hienThiThongBao(thanhCongMsg);
+    } catch (err) {
+      alert("Lỗi copy: " + err);
+    }
+    document.body.removeChild(textArea);
+  }
+
   function copyThongTin(event, tenTT, maKH, soMay, diaChiTT) {
     event.stopPropagation();
     let noiDungCopy = "Tên KH: " + tenTT + "\nMã KH: " + maKH + "\nSố máy: " + soMay + "\nĐịa chỉ: " + diaChiTT;
-    
-    navigator.clipboard.writeText(noiDungCopy).then(function() {
-      hienThiThongBao("✅ Đã copy thông tin: " + tenTT);
-    }).catch(function(err) {
-      alert("Lỗi copy: " + err);
-    });
+    thựcThịCopy(noiDungCopy, "✅ Đã copy thông tin: " + tenTT);
   }
-// Copy riêng lẻ từng đoạn văn bản (Số máy hoặc Mã KH)
+
   function copySingleText(event, text, label) {
-    event.stopPropagation(); // Tránh kích hoạt sự kiện đóng/mở card
+    event.stopPropagation();
     if (!text) return;
-    
-    navigator.clipboard.writeText(text).then(function() {
-      hienThiThongBao("✅ Đã copy " + label + ": " + text);
-    }).catch(function(err) {
-      alert("Lỗi copy: " + err);
-    });
+    thựcThịCopy(text, "✅ Đã copy " + label + ": " + text);
   }
+
   function hienThiThongBao(msg) {
     let toast = document.getElementById("toastMsg");
     if (!toast) {
@@ -780,7 +871,7 @@
   function moBillFullScreen(somay, ten, makh, sdt, diachi, cuoc) {
     let thang = document.getElementById("selectThang").value;
     let year = new Date().getFullYear();
-    document.getElementById('billKyCuoc').innerText = (thang < 10 ? "0" + thang : thang) + "/" + year;
+    document.getElementById('billKyCuoc').innerText = (thang.length < 2 ? "0" + thang : thang) + "/" + year;
     
     document.getElementById('billTenKH').innerText = ten || "";
     document.getElementById('billSoMay').innerText = somay || "";
@@ -805,6 +896,10 @@
     document.getElementById('fullScreenBill').style.display = 'block';
   }
 
+  function inHoaDon() {
+    window.print();
+  }
+
   function dongBillFullScreen() {
     document.getElementById('fullScreenBill').style.display = 'none';
     document.querySelector('.navbar').style.display = 'flex';
@@ -815,10 +910,13 @@
 <!-- KHU VỰC BILL TOÀN MÀN HÌNH -->
 <div id="fullScreenBill" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #f4f6f9; z-index: 10500; overflow-y: auto; padding: 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1a1a1a;">
   
-  <button onclick="dongBillFullScreen()" style="position: fixed; top: 15px; right: 15px; background: rgba(0,0,0,0.1); border: none; width: 36px; height: 36px; border-radius: 50%; font-size: 18px; font-weight: bold; color: #333; z-index: 10600;">✕</button>
+  <div class="no-print" style="position: fixed; top: 15px; right: 15px; display: flex; gap: 8px; z-index: 10600;">
+    <button onclick="inHoaDon()" class="btn btn-sm btn-primary fw-bold"><i class="bi bi-printer-fill me-1"></i> In</button>
+    <button onclick="dongBillFullScreen()" class="btn btn-sm btn-secondary fw-bold">✕ Đóng</button>
+  </div>
 
   <div style="text-align: center; max-width: 500px; margin: 0 auto; position: relative; padding-top: 10px;">
-      <img src="logo-vnpt.png" style="height: 35px; margin-bottom: 5px;">
+      <img src="logo-vnpt.png" style="height: 35px; margin-bottom: 5px;" alt="Logo">
       <div style="font-weight: 800; font-size: 16px;">VNPT - CAN THO</div>
       <div style="font-size: 13px; color: #555;">11 Phan Dinh Phung, phuong Ninh Kieu, Tp Can Tho</div>
       <div style="font-weight: 900; font-size: 18px; margin-top: 15px;">THÔNG BÁO CƯỚC</div>
