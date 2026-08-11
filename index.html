@@ -21,11 +21,15 @@
     
     /* Thẻ Đã Gạch màu cam */
     .badge-dagach {
-      background-color: #fd7e14 !important;
+      background-color: #198754 !important;
       color: #ffffff !important;
       font-weight: bold;
     }
-
+	.badge-gachtay {
+  background-color: #fd7e14 !important;
+  color: #ffffff !important;
+  font-weight: bold;
+}
     /* Chữ Nợ Cước màu tím trước giá tiền */
     .text-nocuoc { color: #800080; font-weight: 800; margin-right: 4px; display: inline-block; }
     
@@ -596,8 +600,8 @@
                   <span class="badge bg-secondary">${item.TUYEN}</span>
                   <span class="badge bg-info text-dark">${item.HINHTHUCTT || 'Thu tại nhà'}</span>
                   ${isTuTT ? '<span class="badge bg-success">Đã Đóng</span>' : ''}
-                  ${isTuTTSMS ? '<span class="badge badge-dagach">Đã Gạch SMS</span>' : ''}
-                  ${isGachTay ? '<span class="badge badge-dagach">Đã Gạch</span>' : ''}
+                  ${isTuTTSMS ? '<span class="badge bg-success">Gạch SMS</span>' : ''}
+				  ${isGachTay ? '<span class="badge badge-gachtay">Đã Gạch</span>' : ''}
                 </div>
                 <span class="money-badge">${tagNoCuoc}${item.CUOC.toLocaleString('vi-VN')} đ</span>
               </div>
