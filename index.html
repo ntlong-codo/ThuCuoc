@@ -13,12 +13,19 @@
     .card-clickable:hover { opacity: 0.9; }
     .card-customer { border: none; border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); transition: all 0.2s; background: #fff; }
     .card-customer.dathu { background-color: #e8f5e9; border-left: 6px solid #2e7d32; }
-    .card-customer.tutt { border-right: 6px solid #0d6efd; }
+    .card-customer.tutt { border-right: 6px solid #fd7e14; }
     .stt-badge { background: #0d6efd; color: #fff; font-weight: bold; width: 30px; height: 30px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.9rem; }
     .money-badge { font-size: 1.15rem; font-weight: 800; color: #d32f2f; }
     .stat-card { border: none; border-radius: 10px; padding: 12px; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
     .action-btn { border-radius: 8px; font-weight: 600; }
     
+    /* Thẻ Đã Gạch màu cam */
+    .badge-dagach {
+      background-color: #fd7e14 !important;
+      color: #ffffff !important;
+      font-weight: bold;
+    }
+
     /* Chữ Nợ Cước màu tím trước giá tiền */
     .text-nocuoc { color: #800080; font-weight: 800; margin-right: 4px; display: inline-block; }
     
@@ -137,7 +144,7 @@
       <!-- 3. Hình Thức Thanh Toán -->
       <div class="col-6 col-md-2">
         <label class="form-label fw-bold small">Hình Thức TT</label>
-        <select id="selectHinhThuc" class="form-select form-select-sm" onchange="locKhachHang()">
+        <select id="selectHinhThuc" class="form-select form-select-sm" onchange="locKhachHang(true)">
           <option value="ALL">Tất cả hình thức</option>
           <option value="Tại Nhà">Tại Nhà</option>
           <option value="Zalo">Zalo</option>
@@ -148,7 +155,7 @@
       <!-- 4. Lọc Trạng Thái -->
       <div class="col-6 col-md-3">
         <label class="form-label fw-bold small">Lọc Trạng Thái</label>
-        <select id="selectFilterStatus" class="form-select form-select-sm" onchange="locKhachHang()">
+        <select id="selectFilterStatus" class="form-select form-select-sm" onchange="locKhachHang(true)">
           <option value="ALL">Tất cả trạng thái</option>
           <option value="CHUATHU">Chưa Thu</option>
           <option value="DATHU_CHUAGACH">Đã Thu chưa gạch</option>
@@ -161,7 +168,7 @@
       <!-- 5. Tìm Kiếm Nhanh -->
       <div class="col-12 col-md-3">
         <label class="form-label fw-bold small">Tìm Kiếm Nhanh</label>
-        <input type="text" id="searchBox" class="form-control form-control-sm" placeholder="Tên, Số máy, SĐT..." onkeyup="locKhachHang()">
+        <input type="text" id="searchBox" class="form-control form-control-sm" placeholder="Tên, Số máy, SĐT..." onkeyup="locKhachHang(true)">
       </div>
     </div>
 
@@ -226,7 +233,7 @@
   </div>
 </div>
 
-<!-- MODAL SỬA THÔNG TIN KHÁCH HÀNG (CÓ THÊM TUYẾN, SỬA GIÁ TIỀN, CHECKBOX NOCUOC) -->
+<!-- MODAL SỬA THÔNG TIN KHÁCH HÀNG -->
 <div class="modal fade" id="editCustomerModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
@@ -345,12 +352,39 @@
 
   let API_URL = localStorage.getItem("THUCUOC_API_URL") || "";
   let fullData = [];
+  let toastTimer = null;
 
   window.onload = function() {
     document.getElementById("apiUrlInput").value = API_URL;
     khoiTaoNgayHenOptions();
     kiemTraDangNhap();
   };
+
+  // --- HÀM THÔNG BÁO CHỮ NỔI (TOAST NOTIFICATION) LÂU HƠN & TÙY CHỈNH DỄ DÀNG ---
+  function hienThiThongBao(msg, duration = 3500) {
+    let toast = document.getElementById("toastMsg");
+    if (!toast) {
+      toast = document.createElement("div");
+      toast.id = "toastMsg";
+      toast.style.cssText = "position:fixed; bottom:35px; left:50%; transform:translateX(-50%); background:rgba(15,23,42,0.92); color:#ffffff; padding:12px 24px; border-radius:30px; z-index:10000; font-size:14px; font-weight:700; white-space:nowrap; box-shadow:0 8px 24px rgba(0,0,0,0.35); transition: opacity 0.3s ease, transform 0.3s ease; opacity: 0; pointer-events: none;";
+      document.body.appendChild(toast);
+    }
+    
+    if (toastTimer) clearTimeout(toastTimer);
+
+    toast.innerHTML = msg;
+    toast.style.display = "block";
+    setTimeout(() => {
+      toast.style.opacity = "1";
+    }, 10);
+
+    if (duration > 0) {
+      toastTimer = setTimeout(() => { 
+        toast.style.opacity = "0"; 
+        setTimeout(() => { toast.style.display = "none"; }, 300); 
+      }, duration);
+    }
+  }
 
   function khoiTaoNgayHenOptions() {
     let select = document.getElementById("editNgayHen");
@@ -432,12 +466,13 @@
       .then(data => callback(data))
       .catch(err => {
         console.error(err);
-        alert("Lỗi kết nối API: " + err.message);
+        hienThiThongBao("❌ Lỗi kết nối API: " + err.message, 4000);
       });
     }
   }
 
   function khoiTao() {
+    hienThiThongBao("⏳ Đang kết nối dữ liệu...", 0);
     callApi({ action: "getInitialData" }, function(res) {
       if (res.status === "success") {
         let selectThang = document.getElementById("selectThang");
@@ -457,22 +492,31 @@
     let thang = document.getElementById("selectThang").value;
     let tuyen = document.getElementById("selectTuyen").value;
 
+    hienThiThongBao(`⏳ Đang tải dữ liệu kỳ ${thang}...`, 0);
+
     document.getElementById("customerList").innerHTML = `
       <div class="text-center py-5">
         <div class="spinner-border text-primary"></div>
         <div class="mt-2 text-muted fw-bold">Đang tải dữ liệu kỳ ${thang}...</div>
       </div>`;
 
-    callApi({ action: "layDuLieuTuyen", tuyenId: tuyen, thang: thang }, renderList);
+    callApi({ action: "layDuLieuTuyen", tuyenId: tuyen, thang: thang }, function(res) {
+      renderList(res);
+      hienThiThongBao(`✅ Tải dữ liệu kỳ ${thang} thành công!`, 2500);
+    });
   }
 
   function renderList(res) {
     if (res.status !== "success") { alert(res.message); return; }
     fullData = res.data;
-    locKhachHang();
+    locKhachHang(false);
   }
 
-  function locKhachHang() {
+  function locKhachHang(isUserTriggered = true) {
+    if (isUserTriggered) {
+      hienThiThongBao("🔍 Đang lọc dữ liệu...", 1200);
+    }
+
     let keyword = document.getElementById("searchBox").value.toLowerCase();
     let statusFilter = document.getElementById("selectFilterStatus").value;
     let hinhThucFilter = document.getElementById("selectHinhThuc").value; 
@@ -552,8 +596,8 @@
                   <span class="badge bg-secondary">${item.TUYEN}</span>
                   <span class="badge bg-info text-dark">${item.HINHTHUCTT || 'Thu tại nhà'}</span>
                   ${isTuTT ? '<span class="badge bg-success">Đã Đóng</span>' : ''}
-                  ${isTuTTSMS ? '<span class="badge bg-primary">Đã Gạch SMS</span>' : ''}
-                  ${isGachTay ? '<span class="badge bg-primary">Đã Gạch</span>' : ''}
+                  ${isTuTTSMS ? '<span class="badge badge-dagach">Đã Gạch SMS</span>' : ''}
+                  ${isGachTay ? '<span class="badge badge-dagach">Đã Gạch</span>' : ''}
                 </div>
                 <span class="money-badge">${tagNoCuoc}${item.CUOC.toLocaleString('vi-VN')} đ</span>
               </div>
@@ -612,7 +656,7 @@
                 </div>
 
                 <div class="col-6 mt-1">
-                  <button class="btn btn-sm ${isGachTay ? 'btn-primary' : 'btn-outline-primary'} w-100 action-btn" 
+                  <button class="btn btn-sm ${isGachTay ? 'btn-warning text-dark' : 'btn-outline-warning text-dark'} w-100 action-btn" 
                           onclick="toggleGachTay('${item.SOMAY}', ${!isGachTay})" 
                           ${disableGachTay ? 'disabled' : ''}>
                     <i class="bi bi-check2-all"></i> Gạch Cước
@@ -667,7 +711,10 @@
   // THAO TÁC THU TIỀN
   function toggleThuTien(somay, status) {
     let thang = document.getElementById("selectThang").value;
+    hienThiThongBao("⏳ Đang Thu Tiền...", 0);
+
     callApi({ action: "xuLyCapNhatTrangThai", data: { action: "toggleDaThu", THANG_NO: thang, SOMAY: somay, DATHU: status } }, function() {
+      hienThiThongBao("✅ Đã Thu Tiền Thành Công! Đang load lại...", 3500);
       taiDanhSachKhach();
     });
   }
@@ -675,7 +722,10 @@
   // THAO TÁC ĐÃ ĐÓNG TIỀN (TUTT)
   function toggleTuTT(somay, status) {
     let thang = document.getElementById("selectThang").value;
+    hienThiThongBao("⏳ Đang cập nhật trạng thái Đã Đóng Tiền...", 0);
+
     callApi({ action: "xuLyCapNhatTrangThai", data: { action: "toggleTuTT", THANG_NO: thang, SOMAY: somay, TUTT: status } }, function() {
+      hienThiThongBao("✅ Đã cập nhật Đóng Tiền Thành Công! Đang load lại...", 3500);
       taiDanhSachKhach();
     });
   }
@@ -683,7 +733,10 @@
   // THAO TÁC GẠCH CƯỚC TAY (GACHTAY)
   function toggleGachTay(somay, status) {
     let thang = document.getElementById("selectThang").value;
+    hienThiThongBao("⏳ Đang Gạch Cước...", 0);
+
     callApi({ action: "xuLyCapNhatTrangThai", data: { action: "toggleGachTay", THANG_NO: thang, SOMAY: somay, GACHTAY: status } }, function() {
+      hienThiThongBao("✅ Đã Gạch Cước Thành Công! Đang load lại...", 3500);
       taiDanhSachKhach();
     });
   }
@@ -693,6 +746,8 @@
     let thang = document.getElementById("selectThang").value;
     let now = new Date();
     let timeStr = now.getHours() + ":" + String(now.getMinutes()).padStart(2, '0') + " " + now.getDate() + "/" + (now.getMonth() + 1);
+
+    hienThiThongBao("⏳ Đang lấy vị trí Check-in...", 0);
 
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(function(pos) {
@@ -708,7 +763,7 @@
 
   function guiCheckIn(thang, somay, timeStr, locationNote) {
     callApi({ action: "xuLyCapNhatTrangThai", data: { action: "checkIn", THANG_NO: thang, SOMAY: somay, timeStr: timeStr, locationNote: locationNote } }, function(res) {
-      alert("Đã ghi nhận Check-in!");
+      hienThiThongBao("✅ Đã Check-in Thành Công! Đang load lại...", 3500);
       taiDanhSachKhach();
     });
   }
@@ -734,8 +789,11 @@
       NGAYHEN: document.getElementById("editNgayHen").value
     };
 
+    hienThiThongBao("⏳ Đang lưu Ghi Chú...", 0);
+
     callApi({ action: "xuLyCapNhatTrangThai", data: payload }, function(res) {
       bootstrap.Modal.getInstance(document.getElementById('noteModal')).hide();
+      hienThiThongBao("✅ Đã lưu Ghi Chú Thành Công! Đang load lại...", 3500);
       taiDanhSachKhach();
     });
   }
@@ -757,10 +815,12 @@
 
     if (!payload.SOMAY || !payload.TENTT) { alert("Vui lòng nhập Số máy và Tên!"); return; }
 
+    hienThiThongBao("⏳ Đang thêm Khách Mới...", 0);
+
     callApi({ action: "xuLyThemKhach", data: payload }, function(res) {
-      alert(res.message);
       bootstrap.Modal.getInstance(document.getElementById('addModal')).hide();
       document.getElementById("addForm").reset();
+      hienThiThongBao("✅ Đã thêm Khách Mới Thành Công! Đang load lại...", 3500);
       taiDanhSachKhach();
     });
   }
@@ -798,14 +858,14 @@
       NOCUOC: document.getElementById("editInfoNoCuoc").checked
     };
 
+    hienThiThongBao("⏳ Đang cập nhật Thông Tin Khách Hàng...", 0);
+
     callApi({ action: "xuLyCapNhatTrangThai", data: payload }, function(res) {
-      if (res && res.message) { alert(res.message); } 
-      else { alert("Đã cập nhật thông tin thành công!"); }
-      
       let modalElem = document.getElementById('editCustomerModal');
       let myModal = bootstrap.Modal.getInstance(modalElem);
       if (myModal) myModal.hide();
       
+      hienThiThongBao("✅ Đã cập nhật Thông Tin Thành Công! Đang load lại...", 3500);
       taiDanhSachKhach();
     });
   }
@@ -813,7 +873,7 @@
   function thựcThịCopy(text, thanhCongMsg) {
     if (navigator.clipboard && window.isSecureContext) {
       navigator.clipboard.writeText(text).then(() => {
-        hienThiThongBao(thanhCongMsg);
+        hienThiThongBao(thanhCongMsg, 3000);
       }).catch(err => {
         fallbackCopyText(text, thanhCongMsg);
       });
@@ -831,7 +891,7 @@
     textArea.select();
     try {
       document.execCommand('copy');
-      hienThiThongBao(thanhCongMsg);
+      hienThiThongBao(thanhCongMsg, 3000);
     } catch (err) {
       alert("Lỗi copy: " + err);
     }
@@ -841,31 +901,13 @@
   function copyThongTin(event, tenTT, maKH, soMay, diaChiTT) {
     event.stopPropagation();
     let noiDungCopy = "Tên KH: " + tenTT + "\nMã KH: " + maKH + "\nSố máy: " + soMay + "\nĐịa chỉ: " + diaChiTT;
-    thựcThịCopy(noiDungCopy, "✅ Đã copy thông tin: " + tenTT);
+    thựcThịCopy(noiDungCopy, "📋 Đã copy thông tin: " + tenTT);
   }
 
   function copySingleText(event, text, label) {
     event.stopPropagation();
     if (!text) return;
-    thựcThịCopy(text, "✅ Đã copy " + label + ": " + text);
-  }
-
-  function hienThiThongBao(msg) {
-    let toast = document.getElementById("toastMsg");
-    if (!toast) {
-      toast = document.createElement("div");
-      toast.id = "toastMsg";
-      toast.style.cssText = "position:fixed; bottom:30px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.85); color:white; padding:10px 20px; border-radius:20px; z-index:9999; font-size:14px; font-weight:bold; white-space:nowrap; box-shadow:0 4px 10px rgba(0,0,0,0.3); transition: opacity 0.3s; opacity: 1;";
-      document.body.appendChild(toast);
-    }
-    toast.innerHTML = msg;
-    toast.style.opacity = "1";
-    toast.style.display = "block";
-    
-    setTimeout(() => { 
-      toast.style.opacity = "0"; 
-      setTimeout(() => { toast.style.display = "none"; }, 300); 
-    }, 2000);
+    thựcThịCopy(text, "📋 Đã copy " + label + ": " + text);
   }
 
   function moBillFullScreen(somay, ten, makh, sdt, diachi, cuoc) {
