@@ -234,18 +234,19 @@
       <div class="modal-body p-0">
         <div class="table-responsive">
           <table class="table table-hover table-striped mb-0 align-middle">
-            <thead class="table-dark">
-              <tr>
-                <th>Ưu Tiên</th>
-                <th>Mã Tuyến</th>
-                <th>Tổng Khách</th>
-                <th>Chưa Thu</th>
-                <th>Đã Thu/Gạch</th>
-                <th>Tại Nhà</th>
-                <th>Tự TT</th>
-                <th>Lọc Tuyến</th>
-              </tr>
-            </thead>
+            <thead>
+  <tr class="text-center table-light">
+    <th>Ưu Tiên</th>
+    <th>Mã Tuyến</th>
+    <th>Tên Tuyến</th>
+    <th>Tổng Khách</th>
+    <th>Chưa Thu</th>
+    <th>Đã Thu/Gạch</th>
+    <th>Tại Nhà</th>
+    <th>Tự TT</th>
+    <th>Lọc Tuyến</th>
+  </tr>
+</thead>
             <tbody id="bodyDanhSachTuyen"></tbody>
           </table>
         </div>
@@ -452,6 +453,7 @@
 
   let API_URL = localStorage.getItem("THUCUOC_API_URL") || "";
   let fullData = [];
+  let listTuyen = [];
   let toastTimer = null;
 
   window.onload = function() {
@@ -573,6 +575,8 @@
     hienThiThongBao("⏳ Đang kết nối dữ liệu...", 0);
     callApi({ action: "getInitialData" }, function(res) {
       if (res.status === "success") {
+        listTuyen = res.listTuyen || []; // 👈 THÊM DÒNG NÀY ĐỂ LƯU DANH SÁCH TUYẾN
+
         let selectThang = document.getElementById("selectThang");
         selectThang.innerHTML = res.listThang.map(t => `<option value="${t}">${t}</option>`).join('');
 
@@ -876,75 +880,102 @@
 
   // --- XEM DANH SÁCH TUYẾN THEO THỨ TỰ ƯU TIÊN ---
   function moModalDanhSachTuyen() {
-    let tuyenMap = {};
+    if (!fullData || fullData.length === 0) {
+      hienThiThongBao("⚠️ Chưa có dữ liệu khách hàng!", 3000);
+      return;
+    }
 
+    // 1. Chuyển mảng listTuyen từ backend thành Map để tra cứu theo MATUYEN
+    let mapTenTuyen = {};
+    if (typeof listTuyen !== "undefined" && Array.isArray(listTuyen)) {
+      listTuyen.forEach(item => {
+        if (item.MATUYEN) {
+          mapTenTuyen[item.MATUYEN] = item.TENTUYEN;
+        }
+      });
+    }
+
+    // 2. Nhóm và tính toán thống kê từng Tuyến từ fullData
+    let mapTuyen = {};
     fullData.forEach(item => {
-      let t = String(item.TUYEN || "KHÁC").trim();
-      if (!tuyenMap[t]) {
-        tuyenMap[t] = {
-          tuyen: t,
+      let maTuyen = String(item.TUYEN || "Khác").trim();
+
+      // Loại bỏ các tuyến ngưng/hủy (97, 98, 99)
+      if (["97", "98", "99"].includes(maTuyen)) return;
+
+      // Tra cứu tên tuyến tương ứng từ mapTenTuyen
+      let tenTuyen = mapTenTuyen[maTuyen] || "";
+
+      if (!mapTuyen[maTuyen]) {
+        mapTuyen[maTuyen] = {
+          maTuyen: maTuyen,
+          tenTuyen: tenTuyen,
           tongKhach: 0,
           chuaThu: 0,
-          daGach: 0,
+          daThuGach: 0,
           taiNha: 0,
           tuTT: 0
         };
       }
-      tuyenMap[t].tongKhach++;
 
-      let isDaGach = item.TUTT || item.TUTTSMS || item.GACHTAY;
-      if (!item.DATHU && !isDaGach) {
-        tuyenMap[t].chuaThu++;
+      let isDaGach = item.TUTTSMS || item.GACHTAY;
+      let isDaThu = item.DATHU;
+      let isTuTT = item.TUTT;
+
+      mapTuyen[maTuyen].tongKhach++;
+
+      if (isDaThu || isTuTT || isDaGach) {
+        mapTuyen[maTuyen].daThuGach++;
       } else {
-        tuyenMap[t].daGach++;
+        mapTuyen[maTuyen].chuaThu++;
       }
 
-      let ht = (item.HINHTHUCTT || "").toLowerCase();
-      if (ht.includes("tại nhà")) {
-        tuyenMap[t].taiNha++;
-      } else if (ht.includes("tự tt") || ht.includes("zalo")) {
-        tuyenMap[t].tuTT++;
+      let hinhThuc = (item.HINHTHUCTT || "").toLowerCase();
+      if (hinhThuc.includes("tại nhà")) {
+        mapTuyen[maTuyen].taiNha++;
+      } else if (hinhThuc.includes("tự tt")) {
+        mapTuyen[maTuyen].tuTT++;
       }
     });
 
-    let list = Object.values(tuyenMap);
+    let dsTuyenHopLe = Object.values(mapTuyen);
 
-    // Ưu tiên:
-    // 1. Chưa thu -> Đã gạch
-    // 2. Thanh toán tại nhà -> Tự thanh toán
-    // 3. Tuyến còn nhiều khách chưa thu nằm lên trên
-    list.sort((a, b) => {
-      if (b.chuaThu !== a.chuaThu) return b.chuaThu - a.chuaThu;
-      if (b.taiNha !== a.taiNha) return b.taiNha - a.taiNha;
-      return b.tongKhach - a.tongKhach;
-    });
+    // 3. Sắp xếp ưu tiên: Tuyến có số lượng "Chưa Thu" nhiều nhất lên đầu
+    dsTuyenHopLe.sort((a, b) => b.chuaThu - a.chuaThu);
 
+    // 4. Render dữ liệu ra bảng HTML
     let html = "";
-    list.forEach((t, idx) => {
+    dsTuyenHopLe.forEach((tuyen, index) => {
       html += `
         <tr>
-          <td><b>#${idx + 1}</b></td>
-          <td><span class="badge bg-primary fs-6">${t.tuyen}</span></td>
-          <td><b>${t.tongKhach}</b></td>
-          <td class="text-danger fw-bold">${t.chuaThu}</td>
-          <td class="text-success fw-bold">${t.daGach}</td>
-          <td>${t.taiNha}</td>
-          <td>${t.tuTT}</td>
-          <td>
-            <button class="btn btn-sm btn-outline-primary py-0" onclick="chonTuyenTuModal('${t.tuyen}')">
-              <i class="bi bi-funnel"></i> Lọc
+          <td class="text-center fw-bold"><span class="badge bg-primary">${index + 1}</span></td>
+          <td class="fw-bold text-center">${tuyen.maTuyen}</td>
+          <td>${tuyen.tenTuyen || tuyen.maTuyen}</td>
+          <td class="text-center">${tuyen.tongKhach}</td>
+          <td class="text-center text-danger fw-bold">${tuyen.chuaThu}</td>
+          <td class="text-center text-success fw-bold">${tuyen.daThuGach}</td>
+          <td class="text-center">${tuyen.taiNha}</td>
+          <td class="text-center">${tuyen.tuTT}</td>
+          <td class="text-center">
+            <button class="btn btn-sm btn-primary py-0 px-2 fw-bold" onclick="chonTuyenTuModal('${tuyen.maTuyen}')">
+              Lọc
             </button>
           </td>
         </tr>
       `;
     });
 
-    document.getElementById("bodyDanhSachTuyen").innerHTML = html || `<tr><td colspan="8" class="text-center py-3">Không có dữ liệu tuyến</td></tr>`;
+    let tbody = document.getElementById("bodyDanhSachTuyen");
+    if (tbody) {
+      tbody.innerHTML = html || `<tr><td colspan="9" class="text-center text-muted">Không tìm thấy dữ liệu tuyến hợp lệ</td></tr>`;
+    }
 
+    // 5. Mở Modal hiển thị
     let modalElem = document.getElementById('modalDanhSachTuyen');
     let myModal = bootstrap.Modal.getInstance(modalElem) || new bootstrap.Modal(modalElem);
     myModal.show();
   }
+
 
   function chonTuyenTuModal(tuyenCode) {
     document.getElementById("selectTuyen").value = tuyenCode;
