@@ -19,17 +19,18 @@
     .stat-card { border: none; border-radius: 10px; padding: 12px; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
     .action-btn { border-radius: 8px; font-weight: 600; }
     
-    /* Thẻ Đã Gạch màu cam */
+    /* Thẻ Đã Gạch màu xanh */
     .badge-dagach {
       background-color: #198754 !important;
       color: #ffffff !important;
       font-weight: bold;
     }
-	.badge-gachtay {
-  background-color: #fd7e14 !important;
-  color: #ffffff !important;
-  font-weight: bold;
-}
+    /* Thẻ Gạch tay màu cam */
+    .badge-gachtay {
+      background-color: #fd7e14 !important;
+      color: #ffffff !important;
+      font-weight: bold;
+    }
     /* Chữ Nợ Cước màu tím trước giá tiền */
     .text-nocuoc { color: #800080; font-weight: 800; margin-right: 4px; display: inline-block; }
     
@@ -296,10 +297,10 @@
               <option value="Tại Nhà">Tại Nhà</option>
               <option value="Tại Nhà có Zalo">Tại Nhà có Zalo</option>
               <option value="Zalo Gửi QR">Zalo Gửi QR</option> 
-                            <option value="Gọi SĐT">Gọi SĐT</option>
+              <option value="Gọi SĐT">Gọi SĐT</option>
               <option value="Zalo Tự TT">Zalo Tự TT</option>
               <option value="Tại GD">Tại GD</option> 
-                            <option value="Tự TT">Tự TT</option>
+              <option value="Tự TT">Tự TT</option>
             </select>
           </div>
           <div class="col-6">
@@ -372,8 +373,8 @@
     kiemTraDangNhap();
   };
 
-  // --- HÀM THÔNG BÁO CHỮ NỔI (TOAST NOTIFICATION) LÂU HƠN & TÙY CHỈNH DỄ DÀNG ---
-  function hienThiThongBao(msg, duration = 3500) {
+  // --- HÀM THÔNG BÁO CHỮ NỔI (TOAST NOTIFICATION) ---
+  function hienThiThongBao(msg, duration = 3000) {
     let toast = document.getElementById("toastMsg");
     if (!toast) {
       toast = document.createElement("div");
@@ -526,7 +527,7 @@
 
   function locKhachHang(isUserTriggered = true) {
     if (isUserTriggered) {
-      hienThiThongBao("🔍 Đang lọc dữ liệu...", 1200);
+      hienThiThongBao("🔍 Đang lọc dữ liệu...", 1000);
     }
 
     let keyword = document.getElementById("searchBox").value.toLowerCase();
@@ -541,7 +542,6 @@
                         item.MAKH.toLowerCase().includes(keyword) ||
                         item.DIACHITT.toLowerCase().includes(keyword);
 
-      // Cả TUTTSMS và GACHTAY đều là Đã Gạch
       let isDaGach = item.TUTTSMS || item.GACHTAY;
 
       let matchStatus = true;
@@ -586,21 +586,18 @@
       let isTuTTSMS = item.TUTTSMS;
       let isGachTay = item.GACHTAY;
 
-      // NẾU CÓ "ĐÃ GẠCH SMS" THÌ DISABLE 3 NÚT: Thu Tiền, Đã đóng tiền, Gạch Cước
       let disableThuTien = isTuTTSMS || isTuTT || isGachTay;
       let disableTuTT = isTuTTSMS || isDaThu;
       let disableGachTay = isTuTTSMS || !isDaThu || isTuTT;
 
       let checkLog = [item.CHECK1, item.CHECK2, item.CHECK3, item.CHECK4, item.CHECK5].filter(c => c).join(" | ");
 
-      // HIỂN THỊ CHỮ "NỢ CƯỚC" MÀU TÍM TRƯỚC SỐ TIỀN KHI NOCUOC = TRUE
       let tagNoCuoc = item.NOCUOC ? '<span class="text-nocuoc">Nợ Cước</span>' : '';
 
       html += `
         <div class="col-12 col-md-6 col-lg-4">
           <div class="card card-customer p-3 ${isDaThu ? 'dathu' : ''} ${(isTuTT || isTuTTSMS || isGachTay) ? 'tutt' : ''}">
             
-            <!-- KHU VỰC BẤM VÀO ĐỂ MỞ / ĐÓNG NÚT -->
             <div class="card-clickable" data-bs-toggle="collapse" data-bs-target="#actionGroup-${item.SOMAY}">
               <div class="d-flex justify-content-between align-items-center mb-1">
                 <div>
@@ -608,13 +605,12 @@
                   <span class="badge bg-secondary">${item.TUYEN}</span>
                   <span class="badge bg-info text-dark">${item.HINHTHUCTT || 'Thu tại nhà'}</span>
                   ${isTuTT ? '<span class="badge bg-success">Đã Đóng</span>' : ''}
-				  ${isGachTay ? '<span class="badge badge-gachtay">Gạch</span>' : ''}
+                  ${isGachTay ? '<span class="badge badge-gachtay">Gạch</span>' : ''}
                   ${isTuTTSMS ? '<span class="badge bg-success">SMS</span>' : ''}
                 </div>
                 <span class="money-badge">${tagNoCuoc}${item.CUOC.toLocaleString('vi-VN')} đ</span>
               </div>
 
-              <!-- TÊN KHÁCH HÀNG: Copy toàn bộ thông tin -->
               <h6 class="fw-bold text-dark mb-1 d-flex justify-content-between align-items-center">
                 <span onclick="copyThongTin(event, '${escapeHtml(item.TENTT)}', '${escapeHtml(item.MAKH)}', '${escapeHtml(item.SOMAY)}', '${escapeHtml(item.DIACHITT)}')" class="text-primary" style="cursor: pointer; position: relative; z-index: 2;" title="Bấm để copy toàn bộ thông tin khách">
                   ${item.TENTT} <i class="bi bi-copy ms-1 text-muted" style="font-size: 0.85rem;"></i>
@@ -622,7 +618,6 @@
                 <i class="bi bi-chevron-down text-muted small"></i> 
               </h6>
 
-              <!-- SỐ MÁY & MÃ KH: Bấm vào phần nào copy riêng phần đó -->
               <div class="small text-muted mb-1">
                 <i class="bi bi-phone me-1"></i>
                 <span onclick="copySingleText(event, '${escapeHtml(item.SOMAY)}', 'Số máy')" class="text-primary" style="cursor: pointer; position: relative; z-index: 2;" title="Bấm để copy Số máy">
@@ -640,16 +635,13 @@
               ${checkLog ? `<div class="small text-success my-1" style="font-size:0.75rem;"><i class="bi bi-clock-history me-1"></i> ${checkLog}</div>` : ''}
             </div>
 
-            <!-- CỤM NÚT THAO TÁC -->
             <div class="collapse border-top mt-2 pt-2" id="actionGroup-${item.SOMAY}">
               
-              <!-- NÚT LIÊN HỆ ĐIỆN THOẠI & ZALO -->
               <div class="d-flex gap-1 mb-2">
                 <a href="tel:${item.SO_DT}" class="btn btn-sm btn-outline-secondary flex-fill"><i class="bi bi-telephone-fill"></i> Gọi</a>
                 <a href="https://zalo.me/${item.SO_DT}" target="_blank" class="btn btn-sm btn-outline-info flex-fill"><i class="bi bi-chat-dots-fill"></i> Zalo</a>
               </div>
 
-              <!-- NÚT THAO TÁC TÁC NGHIỆP -->
               <div class="row g-1">
                 <div class="col-6">
                   <button class="btn btn-sm ${isDaThu ? 'btn-success' : 'btn-outline-success'} w-100 action-btn" 
@@ -681,7 +673,6 @@
                   </button>
                 </div>
 
-                <!-- NÚT GHI CHÚ & NGÀY HẸN -->
                 <div class="col-6 mt-1">
                   <button class="btn btn-sm btn-outline-warning text-dark w-100 action-btn" 
                           onclick="openNoteModal('${item.SOMAY}', '${escapeHtml(item.GHICHU1)}', '${item.NGAYHEN}')">
@@ -689,7 +680,6 @@
                   </button>
                 </div>
 
-                <!-- NÚT SỬA THÔNG TIN KHÁCH HÀNG -->
                 <div class="col-6 mt-1">
                   <button class="btn btn-sm btn-outline-info text-dark w-100 action-btn" 
                           onclick="openEditCustomerModal('${item.SOMAY}', '${escapeHtml(item.TENTT)}', '${item.SO_DT}', '${escapeHtml(item.TUYEN)}', '${item.STTTUYEN}', '${escapeHtml(item.DIACHITT)}', '${escapeHtml(item.HINHTHUCTT || '')}', ${item.CUOC}, ${item.NOCUOC})">
@@ -720,40 +710,51 @@
     return String(str).replace(/'/g, "\\'").replace(/"/g, "&quot;");
   }
 
-  // THAO TÁC THU TIỀN
+  // --- CÁC THAO TÁC CẬP NHẬT DỮ LIỆU TẠI CHỖ (LOCAL CACHE UPDATE) ---
+
+  // 1. THAO TÁC THU TIỀN
   function toggleThuTien(somay, status) {
     let thang = document.getElementById("selectThang").value;
-    hienThiThongBao("⏳ Đang Thu Tiền...", 0);
+    hienThiThongBao("⏳ Đang lưu trạng thái Thu Tiền...", 0);
 
-    callApi({ action: "xuLyCapNhatTrangThai", data: { action: "toggleDaThu", THANG_NO: thang, SOMAY: somay, DATHU: status } }, function() {
-      hienThiThongBao("✅ Đã Thu Tiền Thành Công! Đang load lại...", 3500);
-      taiDanhSachKhach();
+    callApi({ action: "xuLyCapNhatTrangThai", data: { action: "toggleDaThu", THANG_NO: thang, SOMAY: somay, DATHU: status } }, function(res) {
+      let item = fullData.find(i => i.SOMAY === somay);
+      if (item) item.DATHU = status;
+      
+      locKhachHang(false);
+      hienThiThongBao(status ? "✅ Đã đánh dấu THU TIỀN thành công!" : "✅ Đã hủy trạng thái Thu Tiền!", 3000);
     });
   }
 
-  // THAO TÁC ĐÃ ĐÓNG TIỀN (TUTT)
+  // 2. THAO TÁC ĐÃ ĐÓNG TIỀN (TUTT)
   function toggleTuTT(somay, status) {
     let thang = document.getElementById("selectThang").value;
-    hienThiThongBao("⏳ Đang cập nhật trạng thái Đã Đóng Tiền...", 0);
+    hienThiThongBao("⏳ Đang lưu trạng thái Đã Đóng...", 0);
 
-    callApi({ action: "xuLyCapNhatTrangThai", data: { action: "toggleTuTT", THANG_NO: thang, SOMAY: somay, TUTT: status } }, function() {
-      hienThiThongBao("✅ Đã cập nhật Đóng Tiền Thành Công! Đang load lại...", 3500);
-      taiDanhSachKhach();
+    callApi({ action: "xuLyCapNhatTrangThai", data: { action: "toggleTuTT", THANG_NO: thang, SOMAY: somay, TUTT: status } }, function(res) {
+      let item = fullData.find(i => i.SOMAY === somay);
+      if (item) item.TUTT = status;
+
+      locKhachHang(false);
+      hienThiThongBao(status ? "✅ Đã cập nhật ĐẮNG TIỀN thành công!" : "✅ Đã hủy trạng thái Đã Đóng!", 3000);
     });
   }
 
-  // THAO TÁC GẠCH CƯỚC TAY (GACHTAY)
+  // 3. THAO TÁC GẠCH CƯỚC TAY (GACHTAY)
   function toggleGachTay(somay, status) {
     let thang = document.getElementById("selectThang").value;
-    hienThiThongBao("⏳ Đang Gạch Cước...", 0);
+    hienThiThongBao("⏳ Đang lưu Gạch Cước...", 0);
 
-    callApi({ action: "xuLyCapNhatTrangThai", data: { action: "toggleGachTay", THANG_NO: thang, SOMAY: somay, GACHTAY: status } }, function() {
-      hienThiThongBao("✅ Đã Gạch Cước Thành Công! Đang load lại...", 3500);
-      taiDanhSachKhach();
+    callApi({ action: "xuLyCapNhatTrangThai", data: { action: "toggleGachTay", THANG_NO: thang, SOMAY: somay, GACHTAY: status } }, function(res) {
+      let item = fullData.find(i => i.SOMAY === somay);
+      if (item) item.GACHTAY = status;
+
+      locKhachHang(false);
+      hienThiThongBao(status ? "✅ Đã GẠCH CƯỚC thành công!" : "✅ Đã bỏ Gạch Cước!", 3000);
     });
   }
 
-  // THAO TÁC CHECK-IN CÓ TỌA ĐỘ GPS
+  // 4. THAO TÁC CHECK-IN CÓ TỌA ĐỘ GPS
   function checkIn(somay) {
     let thang = document.getElementById("selectThang").value;
     let now = new Date();
@@ -775,12 +776,22 @@
 
   function guiCheckIn(thang, somay, timeStr, locationNote) {
     callApi({ action: "xuLyCapNhatTrangThai", data: { action: "checkIn", THANG_NO: thang, SOMAY: somay, timeStr: timeStr, locationNote: locationNote } }, function(res) {
-      hienThiThongBao("✅ Đã Check-in Thành Công! Đang load lại...", 3500);
-      taiDanhSachKhach();
+      let item = fullData.find(i => i.SOMAY === somay);
+      if (item) {
+        let logStr = timeStr + (locationNote ? " (" + locationNote + ")" : "");
+        if (!item.CHECK1) item.CHECK1 = logStr;
+        else if (!item.CHECK2) item.CHECK2 = logStr;
+        else if (!item.CHECK3) item.CHECK3 = logStr;
+        else if (!item.CHECK4) item.CHECK4 = logStr;
+        else item.CHECK5 = logStr;
+      }
+
+      locKhachHang(false);
+      hienThiThongBao("✅ Check-in vị trí thành công!", 3000);
     });
   }
 
-  // CẬP NHẬT GHI CHÚ
+  // 5. CẬP NHẬT GHI CHÚ
   function openNoteModal(somay, ghichu, ngayhen) {
     document.getElementById("editSomay").value = somay || "";
     document.getElementById("editGhiChu").value = ghichu || "";
@@ -793,24 +804,37 @@
 
   function submitUpdateNote() {
     let thang = document.getElementById("selectThang").value;
+    let somay = document.getElementById("editSomay").value;
+    let ghichu = document.getElementById("editGhiChu").value;
+    let ngayhen = document.getElementById("editNgayHen").value;
+
     let payload = {
       action: "updateNote",
       THANG_NO: thang,
-      SOMAY: document.getElementById("editSomay").value,
-      GHICHU1: document.getElementById("editGhiChu").value,
-      NGAYHEN: document.getElementById("editNgayHen").value
+      SOMAY: somay,
+      GHICHU1: ghichu,
+      NGAYHEN: ngayhen
     };
 
-    hienThiThongBao("⏳ Đang lưu Ghi Chú...", 0);
+    hienThiThongBao("⏳ Đang lưu Ghi Chú & Ngày Hẹn...", 0);
 
     callApi({ action: "xuLyCapNhatTrangThai", data: payload }, function(res) {
-      bootstrap.Modal.getInstance(document.getElementById('noteModal')).hide();
-      hienThiThongBao("✅ Đã lưu Ghi Chú Thành Công! Đang load lại...", 3500);
-      taiDanhSachKhach();
+      let item = fullData.find(i => i.SOMAY === somay);
+      if (item) {
+        item.GHICHU1 = ghichu;
+        item.NGAYHEN = ngayhen;
+      }
+
+      let modalElem = document.getElementById('noteModal');
+      let myModal = bootstrap.Modal.getInstance(modalElem);
+      if (myModal) myModal.hide();
+
+      locKhachHang(false);
+      hienThiThongBao("✅ Đã lưu Ghi Chú & Ngày Hẹn thành công!", 3000);
     });
   }
 
-  // THÊM KHÁCH MỚI
+  // 6. THÊM KHÁCH MỚI
   function submitAddCustomer() {
     let thang = document.getElementById("selectThang").value;
     let payload = {
@@ -821,7 +845,7 @@
       MAKH: document.getElementById("addMAKH").value,
       TENTT: document.getElementById("addTENTT").value,
       SO_DT: document.getElementById("addSODT").value,
-      CUOC: document.getElementById("addCUOC").value,
+      CUOC: parseFloat(document.getElementById("addCUOC").value) || 0,
       DIACHITT: document.getElementById("addDIACHI").value
     };
 
@@ -830,14 +854,27 @@
     hienThiThongBao("⏳ Đang thêm Khách Mới...", 0);
 
     callApi({ action: "xuLyThemKhach", data: payload }, function(res) {
-      bootstrap.Modal.getInstance(document.getElementById('addModal')).hide();
+      fullData.unshift({
+        ...payload,
+        DATHU: false,
+        TUTT: false,
+        TUTTSMS: false,
+        GACHTAY: false,
+        NOCUOC: false,
+        HINHTHUCTT: "Tại Nhà"
+      });
+
+      let modalElem = document.getElementById('addModal');
+      let myModal = bootstrap.Modal.getInstance(modalElem);
+      if (myModal) myModal.hide();
       document.getElementById("addForm").reset();
-      hienThiThongBao("✅ Đã thêm Khách Mới Thành Công! Đang load lại...", 3500);
-      taiDanhSachKhach();
+
+      locKhachHang(false);
+      hienThiThongBao("✅ Đã thêm Khách Mới thành công!", 3000);
     });
   }
 
-  // MỞ MODAL SỬA THÔNG TIN KHÁCH HÀNG
+  // 7. MỞ & LƯU SỬA THÔNG TIN KHÁCH HÀNG
   function openEditCustomerModal(soMay, tenTT, soDT, tuyen, sttTuyen, diaChi, hinhThuc, cuoc, noCuoc) {
     document.getElementById("editInfoSoMay").value = soMay;
     document.getElementById("editInfoTenTT").value = tenTT || "";
@@ -854,7 +891,6 @@
     myModal.show();
   }
 
-  // LƯU THÔNG TIN KHÁCH HÀNG ĐÃ SỬA
   function saveCustomerInfo() {
     let payload = {
       action: "updateCustomerInfo",
@@ -864,7 +900,7 @@
       SO_DT: document.getElementById("editInfoSoDT").value,
       TUYEN: document.getElementById("editInfoTuyen").value,
       STTTUYEN: document.getElementById("editInfoSttTuyen").value,
-      CUOC: document.getElementById("editInfoCuoc").value,
+      CUOC: parseFloat(document.getElementById("editInfoCuoc").value) || 0,
       DIACHITT: document.getElementById("editInfoDiaChi").value,
       HINHTHUCTT: document.getElementById("editInfoHinhThuc").value,
       NOCUOC: document.getElementById("editInfoNoCuoc").checked
@@ -873,12 +909,24 @@
     hienThiThongBao("⏳ Đang cập nhật Thông Tin Khách Hàng...", 0);
 
     callApi({ action: "xuLyCapNhatTrangThai", data: payload }, function(res) {
+      let item = fullData.find(i => i.SOMAY === payload.SOMAY);
+      if (item) {
+        item.TENTT = payload.TENTT;
+        item.SO_DT = payload.SO_DT;
+        item.TUYEN = payload.TUYEN;
+        item.STTTUYEN = payload.STTTUYEN;
+        item.CUOC = payload.CUOC;
+        item.DIACHITT = payload.DIACHITT;
+        item.HINHTHUCTT = payload.HINHTHUCTT;
+        item.NOCUOC = payload.NOCUOC;
+      }
+
       let modalElem = document.getElementById('editCustomerModal');
       let myModal = bootstrap.Modal.getInstance(modalElem);
       if (myModal) myModal.hide();
-      
-      hienThiThongBao("✅ Đã cập nhật Thông Tin Thành Công! Đang load lại...", 3500);
-      taiDanhSachKhach();
+
+      locKhachHang(false);
+      hienThiThongBao("✅ Đã cập nhật Thông Tin Khách Hàng thành công!", 3000);
     });
   }
 
@@ -1005,5 +1053,4 @@
 </div>
 
 </body>
-</html>
 </html>
